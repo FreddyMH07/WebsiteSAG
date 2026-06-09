@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+*.local
+.DS_Store
+Thumbs.db
+tsconfig.tsbuildinfo
+public/assets/sag/_original-uploads/

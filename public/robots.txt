@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Private pages — do not index
+Disallow: /candidate/dashboard
+Disallow: /candidate/profile
+Disallow: /candidate/applications
+Disallow: /hr/dashboard
+Disallow: /hr/applications
+Disallow: /hr/candidates
+
+Sitemap: https://career.sahabatagro.co.id/sitemap.xml

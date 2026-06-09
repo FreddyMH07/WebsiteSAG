@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+body { @apply bg-sag-mist text-slate-800 antialiased; }
+html { scroll-behavior: smooth; }
+
+.container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+.section-pad { @apply py-16 sm:py-20; }
+.card { @apply rounded-3xl border border-slate-200 bg-white shadow-soft; }
+.input { @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sag-gold focus:ring-4 focus:ring-sag-gold/10 transition; }
+.label { @apply text-sm font-semibold text-slate-700; }
+.btn-primary { @apply inline-flex items-center justify-center rounded-full bg-sag-green px-6 py-3 text-sm font-bold text-white shadow-soft transition hover:bg-sag-forest disabled:opacity-60 disabled:cursor-not-allowed; }
+.btn-secondary { @apply inline-flex items-center justify-center rounded-full border border-sag-green/20 bg-white px-6 py-3 text-sm font-bold text-sag-green transition hover:border-sag-green hover:bg-sag-green/5; }
+.btn-gold { @apply inline-flex items-center justify-center rounded-full bg-sag-gold px-6 py-3 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed; }
+.btn-danger { @apply inline-flex items-center justify-center rounded-full bg-red-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed; }
+.table-head { @apply bg-sag-green text-left text-xs uppercase tracking-wide text-white; }
+.table-cell { @apply border-b border-slate-100 px-4 py-3 text-sm; }
+.badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold; }
