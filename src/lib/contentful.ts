@@ -9,6 +9,9 @@ const contentfulClient = spaceId && accessToken
   ? createClient({ space: spaceId, accessToken })
   : null;
 
+console.log('[Contentful] spaceId:', spaceId ? `${spaceId.slice(0, 4)}...` : 'MISSING');
+console.log('[Contentful] client:', contentfulClient ? 'initialized' : 'NULL → fallback mode');
+
 // ─── Fallback data (build won't fail if Contentful not connected) ─────────────
 const FALLBACK_JOBS: ContentfulJob[] = [
   {
@@ -71,16 +74,22 @@ function mapEntry(item: any): ContentfulJob {
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function getActiveJobs(): Promise<ContentfulJob[]> {
-  if (!contentfulClient) return FALLBACK_JOBS;
+  if (!contentfulClient) {
+    console.log('[Contentful] getActiveJobs: no client, returning fallback');
+    return FALLBACK_JOBS;
+  }
   try {
     const res = await contentfulClient.getEntries({
       content_type: 'jobVacancy',
-      'fields.isOpen': true,
       order: ['fields.displayOrder', '-sys.createdAt'] as any,
     });
-    const jobs = res.items.map(mapEntry);
-    return jobs.length ? jobs : FALLBACK_JOBS;
-  } catch {
+    console.log('[Contentful] getActiveJobs: total entries from API =', res.items.length);
+    const all = res.items.map(mapEntry);
+    const open = all.filter(j => j.isOpen);
+    console.log('[Contentful] open jobs =', open.length, '| titles:', open.map(j => j.title));
+    return open.length ? open : FALLBACK_JOBS;
+  } catch (err) {
+    console.error('[Contentful] getActiveJobs error:', err);
     return FALLBACK_JOBS;
   }
 }
