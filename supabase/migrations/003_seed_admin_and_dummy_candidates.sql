@@ -38,10 +38,10 @@ BEGIN
 
     -- Buat identity record (dibutuhkan untuk login)
     INSERT INTO auth.identities (
-      id, user_id, identity_data, provider,
+      provider_id, user_id, identity_data, provider,
       last_sign_in_at, created_at, updated_at
     ) VALUES (
-      v_uid, v_uid,
+      'spv.hrd@sahabatagro.co.id', v_uid,
       jsonb_build_object('sub', v_uid::text, 'email', 'spv.hrd@sahabatagro.co.id'),
       'email', now(), now(), now()
     );
@@ -107,13 +107,13 @@ BEGIN
   ON CONFLICT (email) DO NOTHING;
 
   -- ── Buat identity records ──────────────────────────────────
-  INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+  INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES
-    (uid1, uid1, jsonb_build_object('sub', uid1::text, 'email', 'ahmad.fauzi@gmail.com'),    'email', now(), now(), now()),
-    (uid2, uid2, jsonb_build_object('sub', uid2::text, 'email', 'siti.rahmawati@gmail.com'), 'email', now(), now(), now()),
-    (uid3, uid3, jsonb_build_object('sub', uid3::text, 'email', 'budi.firmansyah@gmail.com'),'email', now(), now(), now()),
-    (uid4, uid4, jsonb_build_object('sub', uid4::text, 'email', 'dewi.anggraini@gmail.com'), 'email', now(), now(), now()),
-    (uid5, uid5, jsonb_build_object('sub', uid5::text, 'email', 'rizky.maulana@gmail.com'),  'email', now(), now(), now())
+    ('ahmad.fauzi@gmail.com',    uid1, jsonb_build_object('sub', uid1::text, 'email', 'ahmad.fauzi@gmail.com'),    'email', now(), now(), now()),
+    ('siti.rahmawati@gmail.com', uid2, jsonb_build_object('sub', uid2::text, 'email', 'siti.rahmawati@gmail.com'), 'email', now(), now(), now()),
+    ('budi.firmansyah@gmail.com',uid3, jsonb_build_object('sub', uid3::text, 'email', 'budi.firmansyah@gmail.com'),'email', now(), now(), now()),
+    ('dewi.anggraini@gmail.com', uid4, jsonb_build_object('sub', uid4::text, 'email', 'dewi.anggraini@gmail.com'), 'email', now(), now(), now()),
+    ('rizky.maulana@gmail.com',  uid5, jsonb_build_object('sub', uid5::text, 'email', 'rizky.maulana@gmail.com'),  'email', now(), now(), now())
   ON CONFLICT DO NOTHING;
 
   -- ── Buat profiles ──────────────────────────────────────────
