@@ -53,19 +53,25 @@ const FALLBACK_JOBS: ContentfulJob[] = [
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 function mapEntry(item: any): ContentfulJob {
   const f = item.fields as Record<string, any>;
+  const title = f.title ?? '';
   return {
     id: item.sys.id,
-    title: f.title ?? '',
-    slug: f.slug ?? item.sys.id,
+    // No slug field in Contentful — generate from title, fallback to sys.id
+    slug: f.slug ?? slugify(title) || item.sys.id,
+    title,
     department: f.department ?? '',
     employmentType: f.type ?? f.employmentType ?? '',
     location: f.location ?? '',
-    descriptionEnglish: f.descriptionEnglish ?? f.description ?? '',
-    descriptionIndonesian: f.descriptionIndonesian ?? '',
-    requirements: f.requirements ?? '',
-    displayOrder: f.displayOrder ?? 99,
+    descriptionEnglish: f.descriptionEn ?? f.descriptionEnglish ?? f.description ?? '',
+    descriptionIndonesian: f.descriptionId ?? f.descriptionIndonesian ?? '',
+    requirements: Array.isArray(f.requirements) ? f.requirements.join('\n') : (f.requirements ?? ''),
+    displayOrder: f.order ?? f.displayOrder ?? 99,
     isOpen: f.isOpen ?? true,
     closingDate: f.closingDate ?? f.deadline ?? undefined,
   };
