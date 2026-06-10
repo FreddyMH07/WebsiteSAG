@@ -87,7 +87,7 @@ export async function getActiveJobs(): Promise<ContentfulJob[]> {
   try {
     const res = await contentfulClient.getEntries({
       content_type: 'jobVacancy',
-      order: ['fields.displayOrder', '-sys.createdAt'] as any,
+      order: 'fields.order,-sys.createdAt' as any,
     });
     console.log('[Contentful] getActiveJobs: total entries from API =', res.items.length);
     const all = res.items.map(mapEntry);
@@ -105,7 +105,7 @@ export async function getAllJobs(): Promise<ContentfulJob[]> {
   try {
     const res = await contentfulClient.getEntries({
       content_type: 'jobVacancy',
-      order: ['fields.displayOrder', '-sys.createdAt'] as any,
+      order: 'fields.order,-sys.createdAt' as any,
     });
     const jobs = res.items.map(mapEntry);
     return jobs.length ? jobs : FALLBACK_JOBS;
