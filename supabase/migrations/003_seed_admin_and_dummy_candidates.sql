@@ -249,27 +249,27 @@ BEGIN
     expected_salary, availability, cover_note,
     source, created_at, updated_at
   ) VALUES
-    (gen_random_uuid(), job_agronomy, uid1, 'agronomy-officer', 'interview',
+    (gen_random_uuid(), job_agronomy, uid1, 'agronomy-officer', 'Interview HR',
      'Rp 6.000.000 - Rp 8.000.000', '1 bulan setelah penawaran',
      'Saya memiliki pengalaman 3 tahun di bidang agronomi perkebunan kelapa sawit dan tertarik berkontribusi dalam pengembangan lahan berkelanjutan di SAG.',
      'portal', now() - INTERVAL '28 days', now() - INTERVAL '5 days'),
 
-    (gen_random_uuid(), job_finance, uid2, 'finance-accounting-staff', 'screening',
+    (gen_random_uuid(), job_finance, uid2, 'finance-accounting-staff', 'Screening HR',
      'Rp 5.500.000 - Rp 7.000.000', '2 minggu setelah penawaran',
      'Lulus cumlaude Akuntansi UNSRI. Berpengalaman dalam audit laporan keuangan dan rekonsiliasi bank selama 2 tahun di KAP.',
      'portal', now() - INTERVAL '22 days', now() - INTERVAL '10 days'),
 
-    (gen_random_uuid(), job_it, uid3, 'it-developer', 'offering',
+    (gen_random_uuid(), job_it, uid3, 'it-developer', 'Offering',
      'Rp 10.000.000 - Rp 14.000.000', 'Segera',
      'Berpengalaman 5 tahun dalam pengembangan sistem enterprise termasuk ERP dan middleware. Sangat tertarik dengan proyek ePlantation dan AutoML SAG.',
      'portal', now() - INTERVAL '18 days', now() - INTERVAL '2 days'),
 
-    (gen_random_uuid(), job_hrd, uid4, 'hrd-staff', 'submitted',
+    (gen_random_uuid(), job_hrd, uid4, 'hrd-staff', 'Applied',
      'Rp 6.500.000 - Rp 8.500.000', '1 bulan setelah penawaran',
      'Bersertifikasi CHRP dengan pengalaman mengelola rekrutmen dan pengembangan karyawan di perusahaan FMCG skala nasional.',
      'portal', now() - INTERVAL '13 days', now() - INTERVAL '13 days'),
 
-    (gen_random_uuid(), job_audit, uid5, 'senior-internal-auditor', 'rejected',
+    (gen_random_uuid(), job_audit, uid5, 'senior-internal-auditor', 'Rejected',
      'Rp 12.000.000 - Rp 16.000.000', '1 bulan setelah penawaran',
      'Senior auditor bersertifikasi CIA dengan 6 tahun pengalaman di firma audit Big-4 afiliasi dan pemahaman mendalam standar IIA.',
      'portal', now() - INTERVAL '8 days', now() - INTERVAL '3 days')
