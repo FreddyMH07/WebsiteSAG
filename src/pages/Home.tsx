@@ -255,7 +255,7 @@ export default function Home() {
                   <img src={sagAssets.office} alt="Kantor SAG" className="h-full w-full object-cover hover:scale-105 transition-transform duration-700" />
                 </div>
                 <div className="overflow-hidden rounded-3xl">
-                  <img src={sagAssets.gbp} alt="GBP Mill" className="h-full w-full object-cover hover:scale-105 transition-transform duration-700" />
+                  <img src={sagAssets.eplantTraining} alt={t('Tim Lapangan SAG', 'SAG Field Team')} className="h-full w-full object-cover hover:scale-105 transition-transform duration-700" />
                 </div>
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function Home() {
                 </div>
                 {[
                   { src: sagAssets.agronomy, alt: t('Agronomi Lapangan', 'Field Agronomy') },
-                  { src: sagAssets.eplantTraining, alt: t('Pelatihan ePlant', 'ePlant Training') },
+                  { src: sagAssets.gatheringClose, alt: t('Kebersamaan Tim', 'Team Togetherness') },
                   { src: sagAssets.team, alt: t('Tim SAG', 'SAG Team') },
                   { src: sagAssets.ubmMou, alt: t('MoU UBM', 'UBM MoU') },
                 ].map(({ src, alt }) => (
