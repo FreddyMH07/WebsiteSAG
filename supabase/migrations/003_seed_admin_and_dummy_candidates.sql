@@ -83,10 +83,10 @@ BEGIN
       'agronomy-officer',
       'Agronomy Officer',
       'PT Pematang Agri Lestari', 'Agronomy', 'Mesuji, Lampung',
-      'Full Time', 'Staff', 'On-site',
+      'Full-time', 'Staff', 'On-site',
       'Bertanggung jawab atas pemantauan dan perawatan tanaman kelapa sawit di area perkebunan.',
       'S1 Agroteknologi/Pertanian, min. 2 tahun pengalaman di perkebunan kelapa sawit.',
-      'active', now() + INTERVAL '30 days',
+      'published', now() + INTERVAL '30 days',
       admin_uid, now() - INTERVAL '35 days', now()
     ),
     (
@@ -94,10 +94,10 @@ BEGIN
       'finance-accounting-staff',
       'Finance & Accounting Staff',
       'PT Sahabat Agro Group', 'Finance & Accounting', 'Jakarta Utara',
-      'Full Time', 'Staff', 'Hybrid',
+      'Full-time', 'Staff', 'Hybrid',
       'Mengelola laporan keuangan, rekonsiliasi bank, dan administrasi perpajakan.',
       'S1 Akuntansi, min. 1 tahun pengalaman, familiar dengan SAP atau sistem ERP.',
-      'active', now() + INTERVAL '30 days',
+      'published', now() + INTERVAL '30 days',
       admin_uid, now() - INTERVAL '30 days', now()
     ),
     (
@@ -105,10 +105,10 @@ BEGIN
       'it-developer',
       'IT Developer',
       'PT Sahabat Agro Group', 'IT', 'Jakarta Utara',
-      'Full Time', 'Mid-Senior', 'Hybrid',
+      'Full-time', 'Senior Staff', 'Hybrid',
       'Mengembangkan dan memelihara sistem internal termasuk HRIS, ePlantation, dan middleware.',
       'S1 Teknik Informatika/Ilmu Komputer, min. 3 tahun pengalaman, menguasai React/Node.js atau Python.',
-      'active', now() + INTERVAL '45 days',
+      'published', now() + INTERVAL '45 days',
       admin_uid, now() - INTERVAL '25 days', now()
     ),
     (
@@ -116,10 +116,10 @@ BEGIN
       'hrd-staff',
       'HRD Staff',
       'PT Sahabat Agro Group', 'HRD', 'Jakarta Utara',
-      'Full Time', 'Staff', 'On-site',
+      'Full-time', 'Staff', 'On-site',
       'Mengelola proses rekrutmen, administrasi karyawan, dan program pengembangan SDM.',
       'S1 Manajemen SDM/Psikologi, min. 2 tahun pengalaman di HR, memiliki sertifikasi CHRP diutamakan.',
-      'active', now() + INTERVAL '30 days',
+      'published', now() + INTERVAL '30 days',
       admin_uid, now() - INTERVAL '20 days', now()
     ),
     (
@@ -127,10 +127,10 @@ BEGIN
       'senior-internal-auditor',
       'Senior Internal Auditor',
       'PT Sahabat Agro Group', 'Internal Audit', 'Jakarta Utara',
-      'Full Time', 'Senior', 'Hybrid',
+      'Full-time', 'Senior Staff', 'Hybrid',
       'Melaksanakan audit internal atas proses bisnis, keuangan, dan kepatuhan di seluruh entitas SAG Group.',
       'S1 Akuntansi, min. 5 tahun pengalaman audit, memiliki sertifikasi CIA/QIA diutamakan.',
-      'active', now() + INTERVAL '30 days',
+      'published', now() + INTERVAL '30 days',
       admin_uid, now() - INTERVAL '15 days', now()
     )
   ON CONFLICT (slug) DO NOTHING;
