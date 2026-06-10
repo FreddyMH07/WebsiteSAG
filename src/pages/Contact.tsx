@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MapPin, Phone, Mail, Send, CheckCircle, AlertCircle, Linkedin, ExternalLink } from 'lucide-react';
+import { MapPin, Mail, Send, CheckCircle, AlertCircle, Linkedin, ExternalLink } from 'lucide-react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import Spinner from '@/components/common/Spinner';
@@ -148,15 +148,6 @@ export default function Contact() {
             <div className="card p-6">
               <h3 className="font-black text-sag-green mb-5">{t('Informasi Kontak', 'Contact Information')}</h3>
               <div className="space-y-4">
-                <a href={`mailto:${contactInfo.emailHr}`} className="flex items-start gap-3 group">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sag-green/10">
-                    <Mail className="h-4 w-4 text-sag-green" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">{t('Email HR & Rekrutmen', 'HR & Recruitment Email')}</p>
-                    <p className="text-sm font-semibold text-sag-green group-hover:underline break-all">{contactInfo.emailHr}</p>
-                  </div>
-                </a>
                 <a href={`mailto:${contactInfo.email}`} className="flex items-start gap-3 group">
                   <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sag-green/10">
                     <Mail className="h-4 w-4 text-sag-green" />
@@ -164,15 +155,6 @@ export default function Contact() {
                   <div>
                     <p className="text-xs text-slate-500">Email IT / Umum</p>
                     <p className="text-sm font-semibold text-sag-green group-hover:underline break-all">{contactInfo.email}</p>
-                  </div>
-                </a>
-                <a href={`tel:${contactInfo.phone}`} className="flex items-start gap-3 group">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sag-green/10">
-                    <Phone className="h-4 w-4 text-sag-green" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">{t('Telepon', 'Phone')}</p>
-                    <p className="text-sm font-semibold text-slate-700 group-hover:text-sag-green">{contactInfo.phone}</p>
                   </div>
                 </a>
                 <a href={contactInfo.maps} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 group">

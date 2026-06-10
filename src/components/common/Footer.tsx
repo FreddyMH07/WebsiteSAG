@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Linkedin, ExternalLink } from 'lucide-react';
+import { MapPin, Linkedin, ExternalLink } from 'lucide-react';
 import { useLang } from '@/hooks/useLang';
 import { sagAssets, contactInfo } from '@/data/siteContent';
 
@@ -33,13 +33,6 @@ export default function Footer() {
 
             {/* Contact info */}
             <div className="mt-5 space-y-2">
-              <a href={`mailto:${contactInfo.emailHr}`} className="flex items-center gap-2 text-xs text-white/55 hover:text-white transition">
-                <Mail className="h-3.5 w-3.5 text-sag-gold flex-shrink-0" />
-                <span>{contactInfo.emailHr} <span className="text-white/30">({t('Rekrutmen', 'Recruitment')})</span></span>
-              </a>
-              <a href={`tel:${contactInfo.phone}`} className="flex items-center gap-2 text-xs text-white/55 hover:text-white transition">
-                <Phone className="h-3.5 w-3.5 text-sag-gold flex-shrink-0" /> {contactInfo.phone}
-              </a>
               <a href={contactInfo.maps} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2 text-xs text-white/55 hover:text-white transition">
                 <MapPin className="h-3.5 w-3.5 mt-0.5 text-sag-gold flex-shrink-0" />
                 <span className="leading-5">{contactInfo.addressShort}</span>
