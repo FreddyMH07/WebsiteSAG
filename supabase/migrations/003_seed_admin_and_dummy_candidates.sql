@@ -182,7 +182,7 @@ BEGIN
     ('00000000-0000-0000-0000-000000000000', uid5, 'authenticated', 'authenticated',
      'rizky.maulana@gmail.com',  dummy_pass, now(),
      '{"provider":"email","providers":["email"]}', '{}', false, now() - INTERVAL '10 days', now())
-  ON CONFLICT (email) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- ── Auth identities ───────────────────────────────────────
   INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
