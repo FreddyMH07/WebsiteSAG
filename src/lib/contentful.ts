@@ -63,7 +63,7 @@ function mapEntry(item: any): ContentfulJob {
   return {
     id: item.sys.id,
     // No slug field in Contentful — generate from title, fallback to sys.id
-    slug: f.slug ?? slugify(title) || item.sys.id,
+    slug: (f.slug ?? slugify(title)) || item.sys.id,
     title,
     department: f.department ?? '',
     employmentType: f.type ?? f.employmentType ?? '',
