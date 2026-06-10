@@ -146,11 +146,19 @@ END $$;
 
 DO $$
 DECLARE
+  -- auth.users UUID (user login)
   uid1 UUID := gen_random_uuid();
   uid2 UUID := gen_random_uuid();
   uid3 UUID := gen_random_uuid();
   uid4 UUID := gen_random_uuid();
   uid5 UUID := gen_random_uuid();
+
+  -- candidates.id UUID (FK yang dipakai di applications.candidate_id)
+  cid1 UUID := gen_random_uuid();
+  cid2 UUID := gen_random_uuid();
+  cid3 UUID := gen_random_uuid();
+  cid4 UUID := gen_random_uuid();
+  cid5 UUID := gen_random_uuid();
 
   dummy_pass TEXT := crypt('Candidate@2026!', gen_salt('bf'));
 
@@ -204,72 +212,72 @@ BEGIN
     (uid5, 'Rizky Maulana Saputra', 'rizky.maulana@gmail.com',  'candidate', 'active', now() - INTERVAL '10 days', now())
   ON CONFLICT (id) DO NOTHING;
 
-  -- ── Candidates (experience_years = INTEGER) ───────────────
+  -- ── Candidates (id = cid1–cid5, dirujuk di applications.candidate_id) ─
   INSERT INTO candidates (
     id, user_id, full_name, email, phone, domicile,
-    education, major, experience_years, experience_year,
+    education, major, experience_years,
     current_company, current_position, expected_salary,
     linkedin_url, cv_url, created_at, updated_at
   ) VALUES
-    (gen_random_uuid(), uid1,
+    (cid1, uid1,
      'Ahmad Fauzi Hidayat', 'ahmad.fauzi@gmail.com', '+62 812-1234-5678',
-     'Bandar Lampung', 'S1', 'Agroteknologi', 3, '3 tahun',
+     'Bandar Lampung', 'S1', 'Agroteknologi', 3,
      'PT Perkebunan Nusantara VII', 'Staff Agronomi', 'Rp 6.000.000 - Rp 8.000.000',
      'https://linkedin.com/in/ahmad-fauzi-hidayat', NULL,
      now() - INTERVAL '30 days', now()),
-    (gen_random_uuid(), uid2,
+    (cid2, uid2,
      'Siti Rahmawati', 'siti.rahmawati@gmail.com', '+62 813-2345-6789',
-     'Palembang', 'S1', 'Akuntansi', 2, '2 tahun',
+     'Palembang', 'S1', 'Akuntansi', 2,
      'KAP Tanubrata & Rekan', 'Junior Auditor', 'Rp 5.500.000 - Rp 7.000.000',
      'https://linkedin.com/in/siti-rahmawati-akuntansi', NULL,
      now() - INTERVAL '25 days', now()),
-    (gen_random_uuid(), uid3,
+    (cid3, uid3,
      'Budi Firmansyah', 'budi.firmansyah@gmail.com', '+62 878-3456-7890',
-     'Jakarta Selatan', 'S1', 'Teknik Informatika', 5, '5 tahun',
+     'Jakarta Selatan', 'S1', 'Teknik Informatika', 5,
      'PT Telkom Indonesia', 'Senior IT Developer', 'Rp 10.000.000 - Rp 14.000.000',
      'https://linkedin.com/in/budi-firmansyah-dev', NULL,
      now() - INTERVAL '20 days', now()),
-    (gen_random_uuid(), uid4,
+    (cid4, uid4,
      'Dewi Anggraini', 'dewi.anggraini@gmail.com', '+62 856-4567-8901',
-     'Bogor', 'S1', 'Manajemen Sumber Daya Manusia', 3, '3 tahun',
+     'Bogor', 'S1', 'Manajemen Sumber Daya Manusia', 3,
      'PT Indofood Sukses Makmur', 'HR Generalist', 'Rp 6.500.000 - Rp 8.500.000',
      'https://linkedin.com/in/dewi-anggraini-hr', NULL,
      now() - INTERVAL '15 days', now()),
-    (gen_random_uuid(), uid5,
+    (cid5, uid5,
      'Rizky Maulana Saputra', 'rizky.maulana@gmail.com', '+62 821-5678-9012',
-     'Bekasi', 'S1', 'Akuntansi', 6, '6 tahun',
+     'Bekasi', 'S1', 'Akuntansi', 6,
      'BDO Indonesia', 'Senior Internal Auditor', 'Rp 12.000.000 - Rp 16.000.000',
      'https://linkedin.com/in/rizky-maulana-audit', NULL,
      now() - INTERVAL '10 days', now())
   ON CONFLICT DO NOTHING;
 
-  -- ── Applications (job_id NOT NULL, pakai UUID dari BAGIAN 2) ─
+  -- ── Applications (candidate_id = cid1–cid5, bukan uid) ──────
   INSERT INTO applications (
     id, job_id, candidate_id, job_slug, status,
     expected_salary, availability, cover_note,
     source, created_at, updated_at
   ) VALUES
-    (gen_random_uuid(), job_agronomy, uid1, 'agronomy-officer', 'Interview HR',
+    (gen_random_uuid(), job_agronomy, cid1, 'agronomy-officer', 'Interview HR',
      'Rp 6.000.000 - Rp 8.000.000', '1 bulan setelah penawaran',
      'Saya memiliki pengalaman 3 tahun di bidang agronomi perkebunan kelapa sawit dan tertarik berkontribusi dalam pengembangan lahan berkelanjutan di SAG.',
      'portal', now() - INTERVAL '28 days', now() - INTERVAL '5 days'),
 
-    (gen_random_uuid(), job_finance, uid2, 'finance-accounting-staff', 'Screening HR',
+    (gen_random_uuid(), job_finance, cid2, 'finance-accounting-staff', 'Screening HR',
      'Rp 5.500.000 - Rp 7.000.000', '2 minggu setelah penawaran',
      'Lulus cumlaude Akuntansi UNSRI. Berpengalaman dalam audit laporan keuangan dan rekonsiliasi bank selama 2 tahun di KAP.',
      'portal', now() - INTERVAL '22 days', now() - INTERVAL '10 days'),
 
-    (gen_random_uuid(), job_it, uid3, 'it-developer', 'Offering',
+    (gen_random_uuid(), job_it, cid3, 'it-developer', 'Offering',
      'Rp 10.000.000 - Rp 14.000.000', 'Segera',
      'Berpengalaman 5 tahun dalam pengembangan sistem enterprise termasuk ERP dan middleware. Sangat tertarik dengan proyek ePlantation dan AutoML SAG.',
      'portal', now() - INTERVAL '18 days', now() - INTERVAL '2 days'),
 
-    (gen_random_uuid(), job_hrd, uid4, 'hrd-staff', 'Applied',
+    (gen_random_uuid(), job_hrd, cid4, 'hrd-staff', 'Applied',
      'Rp 6.500.000 - Rp 8.500.000', '1 bulan setelah penawaran',
      'Bersertifikasi CHRP dengan pengalaman mengelola rekrutmen dan pengembangan karyawan di perusahaan FMCG skala nasional.',
      'portal', now() - INTERVAL '13 days', now() - INTERVAL '13 days'),
 
-    (gen_random_uuid(), job_audit, uid5, 'senior-internal-auditor', 'Rejected',
+    (gen_random_uuid(), job_audit, cid5, 'senior-internal-auditor', 'Rejected',
      'Rp 12.000.000 - Rp 16.000.000', '1 bulan setelah penawaran',
      'Senior auditor bersertifikasi CIA dengan 6 tahun pengalaman di firma audit Big-4 afiliasi dan pemahaman mendalam standar IIA.',
      'portal', now() - INTERVAL '8 days', now() - INTERVAL '3 days')
@@ -296,6 +304,6 @@ ORDER BY p.role DESC, u.email;
 SELECT c.full_name, c.domicile, c.education, c.experience_years,
        j.title AS job_title, a.status AS app_status
 FROM candidates c
-JOIN applications a ON a.candidate_id = c.user_id
+JOIN applications a ON a.candidate_id = c.id
 JOIN jobs j ON j.id = a.job_id
 ORDER BY a.created_at DESC;

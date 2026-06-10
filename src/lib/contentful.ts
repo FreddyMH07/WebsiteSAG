@@ -1,8 +1,8 @@
 import { createClient } from 'contentful';
 import type { ContentfulJob } from '@/types';
 
-const spaceId = (import.meta.env.CONTENTFUL_SPACE_ID ?? import.meta.env.VITE_CONTENTFUL_SPACE_ID) as string | undefined;
-const accessToken = (import.meta.env.CONTENTFUL_ACCESS_TOKEN ?? import.meta.env.VITE_CONTENTFUL_ACCESS_TOKEN) as string | undefined;
+const spaceId = import.meta.env.VITE_CONTENTFUL_SPACE_ID as string | undefined;
+const accessToken = import.meta.env.VITE_CONTENTFUL_ACCESS_TOKEN as string | undefined;
 
 // Graceful — if Contentful is not configured, use fallback data
 const contentfulClient = spaceId && accessToken
