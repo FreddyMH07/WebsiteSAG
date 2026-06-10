@@ -4,6 +4,7 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ToastProvider } from '@/hooks/useToast';
 import { LangProvider } from '@/hooks/useLang';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
+import AntiFraudPopup from '@/components/common/AntiFraudPopup';
 
 // Public pages
 import Home from '@/pages/Home';
@@ -36,6 +37,7 @@ export default function App() {
       <LangProvider>
         <AuthProvider>
           <ToastProvider>
+            <AntiFraudPopup />
             <Routes>
               {/* Public career portal */}
               <Route path="/" element={<Home />} />
