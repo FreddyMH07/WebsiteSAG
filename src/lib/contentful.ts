@@ -115,23 +115,6 @@ export async function getAllJobs(): Promise<ContentfulJob[]> {
 }
 
 export async function getJobBySlug(slug: string): Promise<ContentfulJob | null> {
-  const fallback = FALLBACK_JOBS.find((j) => j.slug === slug);
-
-  if (!contentfulClient) return fallback ?? null;
-  try {
-    // Try fields.slug first (if Contentful entry has a slug field)
-    const byField = await contentfulClient.getEntries({
-      content_type: 'jobVacancy',
-      'fields.slug': slug,
-      limit: 1,
-    });
-    if (byField.items.length) return mapEntry(byField.items[0]);
-
-    // Slug not stored in Contentful → fetch all and match by generated slug
-    const all = await contentfulClient.getEntries({ content_type: 'jobVacancy' });
-    const match = all.items.find((item) => mapEntry(item).slug === slug);
-    return match ? mapEntry(match) : (fallback ?? null);
-  } catch {
-    return fallback ?? null;
-  }
+  const all = await getAllJobs();
+  return all.find((j) => j.slug === slug) ?? null;
 }
