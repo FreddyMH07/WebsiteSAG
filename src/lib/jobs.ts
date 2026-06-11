@@ -1,21 +1,40 @@
 import { supabase } from '@/lib/supabase';
-import type { Job } from '@/types';
+import type { Job, CompanyInfo } from '@/types';
 
-const SELECT_COLS = 'id,title,slug,company,department,employment_type,location,description,requirements,status,closing_date';
+export const HOLDING: CompanyInfo = {
+  name: 'PT Sahabat Agro Group',
+  shortName: 'SAG',
+  logoUrl: '/assets/sag/brand/logo-ptsag.png',
+  address: null,
+};
+
+/** Returns company info with fallback to holding if null or missing logo. */
+export function resolveCompany(company: CompanyInfo | null): CompanyInfo {
+  if (!company) return HOLDING;
+  return company;
+}
+
+const SELECT_COLS = 'id,title,slug,department,employment_type,location,description,requirements,status,closing_date,company_id,companies(name,short_name,logo_url,address)';
 
 function mapRow(row: Record<string, unknown>): Job {
+  const co = row.companies as Record<string, unknown> | null | undefined;
   return {
-    id:              String(row.id),
-    title:           String(row.title),
-    slug:            String(row.slug),
-    company:         row.company   ? String(row.company)   : undefined,
-    department:      String(row.department ?? ''),
-    employmentType:  String(row.employment_type ?? ''),
-    location:        String(row.location ?? ''),
-    description:     row.description  ? String(row.description)  : undefined,
-    requirements:    row.requirements ? String(row.requirements) : undefined,
-    isOpen:          row.status === 'published',
-    closingDate:     row.closing_date ? String(row.closing_date) : undefined,
+    id:             String(row.id),
+    title:          String(row.title),
+    slug:           String(row.slug),
+    company: co ? {
+      name:      String(co.name),
+      shortName: co.short_name ? String(co.short_name) : null,
+      logoUrl:   co.logo_url   ? String(co.logo_url)   : null,
+      address:   co.address    ? String(co.address)    : null,
+    } : null,
+    department:     String(row.department ?? ''),
+    employmentType: String(row.employment_type ?? ''),
+    location:       String(row.location ?? ''),
+    description:    row.description  ? String(row.description)  : undefined,
+    requirements:   row.requirements ? String(row.requirements) : undefined,
+    isOpen:         row.status === 'published',
+    closingDate:    row.closing_date ? String(row.closing_date) : undefined,
   };
 }
 

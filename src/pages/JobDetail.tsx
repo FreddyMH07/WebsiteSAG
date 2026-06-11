@@ -7,7 +7,7 @@ import Spinner from '@/components/common/Spinner';
 import SEO from '@/components/common/SEO';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { getJobBySlug } from '@/lib/jobs';
+import { getJobBySlug, resolveCompany } from '@/lib/jobs';
 import type { ContentfulJob } from '@/types';
 
 const SITE_URL = 'https://career.sahabatagro.co.id';
@@ -172,6 +172,10 @@ export default function JobDetail() {
             <div className="card p-6">
               <h3 className="font-black text-sag-green">Ringkasan Posisi</h3>
               <dl className="mt-4 space-y-3 text-sm">
+                <div>
+                  <dt className="text-slate-500">Perusahaan</dt>
+                  <dd className="font-semibold text-slate-800">{resolveCompany(job.company).name}</dd>
+                </div>
                 <div>
                   <dt className="text-slate-500">Departemen</dt>
                   <dd className="font-semibold text-slate-800">{job.department}</dd>

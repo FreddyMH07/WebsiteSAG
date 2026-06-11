@@ -146,13 +146,22 @@ export interface CandidateProfile {
 
 export type CandidateProfilePatch = Partial<CandidateProfile> & { full_name?: string; phone?: string };
 
+// ─── Company ──────────────────────────────────────────────────────────────────
+
+export interface CompanyInfo {
+  name: string;
+  shortName: string | null;
+  logoUrl: string | null;
+  address: string | null;
+}
+
 // ─── Job (Supabase jobs table) ────────────────────────────────────────────────
 
 export interface Job {
   id: string;
   title: string;
   slug: string;
-  company?: string;
+  company: CompanyInfo | null;
   department: string;
   employmentType: string;
   location: string;

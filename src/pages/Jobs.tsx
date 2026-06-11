@@ -6,7 +6,7 @@ import Footer from '@/components/common/Footer';
 import Spinner from '@/components/common/Spinner';
 import SEO from '@/components/common/SEO';
 import { sagAssets, careerDepartments, employmentTypes } from '@/data/siteContent';
-import { getActiveJobs } from '@/lib/jobs';
+import { getActiveJobs, resolveCompany } from '@/lib/jobs';
 import type { ContentfulJob } from '@/types';
 
 export default function Jobs() {
@@ -103,8 +103,9 @@ export default function Jobs() {
                       {job.isOpen ? 'Open' : 'Closed'}
                     </span>
                   </div>
-                  <h3 className="mt-3 flex-1 text-lg font-black text-sag-green leading-snug">{job.title}</h3>
-                  <div className="mt-4 space-y-1.5 text-sm text-slate-500">
+                  <h3 className="mt-3 text-lg font-black text-sag-green leading-snug">{job.title}</h3>
+                  <p className="mt-1 text-xs text-slate-400">{resolveCompany(job.company).name}</p>
+                  <div className="mt-3 space-y-1.5 text-sm text-slate-500">
                     <span className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" />{job.location}</span>
                     <span className="flex items-center gap-2"><Briefcase className="h-3.5 w-3.5" />{job.employmentType}</span>
                     {job.closingDate && (

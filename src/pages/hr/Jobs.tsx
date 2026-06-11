@@ -18,11 +18,19 @@ interface AppStats {
   rejected: number;
 }
 
+interface CompanyRow {
+  id: string;
+  name: string;
+  short_name: string | null;
+  logo_url: string | null;
+}
+
 interface HRJob {
   id: string;
   title: string;
   slug: string;
-  company: string;
+  company_id: string | null;
+  companies: CompanyRow | null;
   department: string;
   location: string;
   employment_type: string;
@@ -40,7 +48,7 @@ interface HRJob {
 
 interface JobForm {
   title: string;
-  company: string;
+  company_id: string;
   department: string;
   location: string;
   employment_type: string;
@@ -56,7 +64,7 @@ interface JobForm {
 
 const EMPTY_FORM: JobForm = {
   title: '',
-  company: 'PT Sahabat Agro Group',
+  company_id: '',
   department: '',
   location: '',
   employment_type: 'Full-time',
@@ -112,9 +120,11 @@ function Field({ label, required, children }: { label: string; required?: boolea
 export default function HRJobs() {
   const { toast } = useToast();
   const [jobs, setJobs] = useState<HRJob[]>([]);
+  const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'published' | 'draft' | 'closed'>('published');
   const [search, setSearch] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
 
   const [modal, setModal] = useState<'add' | 'edit' | null>(null);
   const [editing, setEditing] = useState<HRJob | null>(null);
@@ -123,14 +133,21 @@ export default function HRJobs() {
   const [slugWarning, setSlugWarning] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<HRJob | null>(null);
 
+  const fetchCompanies = useCallback(async () => {
+    const { data } = await supabase.from('companies').select('id,name,short_name,logo_url').order('is_holding', { ascending: false }).order('name');
+    setCompanies(data ?? []);
+  }, []);
+
   const fetchJobs = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*, companies(id,name,short_name,logo_url)')
+      .order('created_at', { ascending: false });
     if (error) { toast('Gagal memuat data: ' + error.message, 'error'); setLoading(false); return; }
 
     const ids = (data ?? []).map((j) => j.id);
     const statsMap: Record<string, AppStats> = {};
-
     if (ids.length > 0) {
       const { data: appData } = await supabase.from('applications').select('job_id, status').in('job_id', ids);
       (appData ?? []).forEach((row) => {
@@ -144,28 +161,36 @@ export default function HRJobs() {
         statsMap[row.job_id] = s;
       });
     }
-
     setJobs((data ?? []).map((j) => ({ ...j, stats: statsMap[j.id] ?? { ...EMPTY_STATS } })));
     setLoading(false);
   }, [toast]);
 
-  useEffect(() => { fetchJobs(); }, [fetchJobs]);
+  useEffect(() => { fetchCompanies(); fetchJobs(); }, [fetchCompanies, fetchJobs]);
 
-  const openAdd = () => { setEditing(null); setForm(EMPTY_FORM); setSlugWarning(false); setModal('add'); };
+  const openAdd = () => {
+    setEditing(null);
+    const holdingId = companies.find((c) => c.name.includes('Sahabat Agro'))?.id ?? '';
+    setForm({ ...EMPTY_FORM, company_id: holdingId });
+    setSlugWarning(false);
+    setModal('add');
+  };
+
   const openEdit = (job: HRJob) => {
     setEditing(job);
     setForm({
-      title: job.title, company: job.company, department: job.department,
-      location: job.location, employment_type: job.employment_type,
-      level: job.level ?? '', work_arrangement: job.work_arrangement ?? '',
-      description: job.description ?? '', responsibilities: job.responsibilities ?? '',
-      requirements: job.requirements ?? '', benefits: job.benefits ?? '',
+      title: job.title, company_id: job.company_id ?? '',
+      department: job.department, location: job.location,
+      employment_type: job.employment_type, level: job.level ?? '',
+      work_arrangement: job.work_arrangement ?? '', description: job.description ?? '',
+      responsibilities: job.responsibilities ?? '', requirements: job.requirements ?? '',
+      benefits: job.benefits ?? '',
       closing_date: job.closing_date ? job.closing_date.split('T')[0] : '',
       status: job.status,
     });
     setSlugWarning(job.stats.total > 0);
     setModal('edit');
   };
+
   const closeModal = () => { setModal(null); setEditing(null); };
 
   const handleChange = (field: keyof JobForm, value: string) =>
@@ -175,16 +200,22 @@ export default function HRJobs() {
 
   const handleSave = async () => {
     if (!form.title.trim()) { toast('Judul posisi wajib diisi.', 'error'); return; }
-    if (!form.company.trim()) { toast('Nama perusahaan wajib diisi.', 'error'); return; }
+    if (!form.company_id)   { toast('Perusahaan wajib dipilih.', 'error'); return; }
     setSaving(true);
     const payload = {
-      title: form.title.trim(), company: form.company.trim(),
-      department: form.department.trim(), location: form.location.trim(),
-      employment_type: form.employment_type, level: form.level || null,
+      title:            form.title.trim(),
+      company_id:       form.company_id,
+      department:       form.department.trim(),
+      location:         form.location.trim(),
+      employment_type:  form.employment_type,
+      level:            form.level || null,
       work_arrangement: form.work_arrangement || null,
-      description: form.description || null, responsibilities: form.responsibilities || null,
-      requirements: form.requirements || null, benefits: form.benefits || null,
-      closing_date: form.closing_date || null, status: form.status,
+      description:      form.description || null,
+      responsibilities: form.responsibilities || null,
+      requirements:     form.requirements || null,
+      benefits:         form.benefits || null,
+      closing_date:     form.closing_date || null,
+      status:           form.status,
     };
     if (modal === 'add') {
       const { error } = await supabase.from('jobs').insert({ ...payload, slug: computedSlug || slugify(form.title) });
@@ -209,10 +240,15 @@ export default function HRJobs() {
   const q = search.toLowerCase();
   const displayed = jobs
     .filter((j) => j.status === tab)
+    .filter((j) => !companyFilter || j.company_id === companyFilter)
     .filter((j) => !q || j.title.toLowerCase().includes(q) || j.department.toLowerCase().includes(q))
     .sort((a, b) => b.stats.total - a.stats.total);
 
-  const tabCounts = { published: jobs.filter((j) => j.status === 'published').length, draft: jobs.filter((j) => j.status === 'draft').length, closed: jobs.filter((j) => j.status === 'closed').length };
+  const tabCounts = {
+    published: jobs.filter((j) => j.status === 'published').length,
+    draft:     jobs.filter((j) => j.status === 'draft').length,
+    closed:    jobs.filter((j) => j.status === 'closed').length,
+  };
 
   return (
     <HRLayout>
@@ -226,8 +262,8 @@ export default function HRJobs() {
         </button>
       </div>
 
-      {/* Tabs + Search */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      {/* Tabs + Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="flex gap-1 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-100">
           {(['published', 'draft', 'closed'] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
@@ -237,14 +273,17 @@ export default function HRJobs() {
             </button>
           ))}
         </div>
-        <div className="relative">
+        <select
+          className="input w-auto min-w-[180px] text-sm"
+          value={companyFilter}
+          onChange={(e) => setCompanyFilter(e.target.value)}>
+          <option value="">Semua Perusahaan</option>
+          {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            className="input pl-9 pr-4 text-sm w-56"
-            placeholder="Cari judul / departemen…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <input className="input pl-9 text-sm" placeholder="Cari judul / departemen…"
+            value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
 
@@ -254,7 +293,7 @@ export default function HRJobs() {
           <div className="flex justify-center py-16"><Spinner size="lg" /></div>
         ) : displayed.length === 0 ? (
           <div className="py-16 text-center text-slate-400">
-            {search ? 'Tidak ada lowongan yang cocok.' : `Tidak ada lowongan "${tab}".`}
+            {search || companyFilter ? 'Tidak ada lowongan yang cocok.' : `Tidak ada lowongan "${tab}".`}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -262,6 +301,7 @@ export default function HRJobs() {
               <thead>
                 <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase tracking-wider text-slate-400">
                   <th className="px-4 py-3">Posisi</th>
+                  <th className="px-4 py-3">Perusahaan</th>
                   <th className="px-4 py-3">Dept / Tipe</th>
                   <th className="px-4 py-3">Lokasi</th>
                   <th className="px-4 py-3">Closing</th>
@@ -285,6 +325,9 @@ export default function HRJobs() {
                         </a>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-slate-600 text-xs">
+                      {job.companies?.short_name ?? job.companies?.name ?? 'SAG'}
+                    </td>
                     <td className="px-4 py-3 text-slate-500">
                       <div>{job.department}</div>
                       <div className="text-xs">{job.employment_type}</div>
@@ -297,27 +340,20 @@ export default function HRJobs() {
                           className="inline-block font-bold text-sag-green hover:underline">
                           {job.stats.total}
                         </Link>
-                      ) : (
-                        <span className="text-slate-400">0</span>
-                      )}
+                      ) : <span className="text-slate-400">0</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {job.stats.newApps > 0 ? (
-                        <span className="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
-                          {job.stats.newApps}
-                        </span>
-                      ) : <span className="text-slate-300">—</span>}
+                      {job.stats.newApps > 0
+                        ? <span className="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">{job.stats.newApps}</span>
+                        : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {job.stats.inProgress > 0 ? (
-                        <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
-                          {job.stats.inProgress}
-                        </span>
-                      ) : <span className="text-slate-300">—</span>}
+                      {job.stats.inProgress > 0
+                        ? <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">{job.stats.inProgress}</span>
+                        : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center text-xs font-semibold text-slate-600">
-                      <span className="text-green-600">{job.stats.hired}</span>
-                      {' / '}
+                      <span className="text-green-600">{job.stats.hired}</span>{' / '}
                       <span className="text-red-500">{job.stats.rejected}</span>
                     </td>
                     <td className="px-4 py-3 text-center"><StatusBadge status={job.status} /></td>
@@ -396,52 +432,79 @@ export default function HRJobs() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Judul Posisi" required>
-                  <input className="input" value={form.title} onChange={(e) => handleChange('title', e.target.value)} placeholder="mis. Finance & Accounting Staff" />
+                  <input className="input" value={form.title}
+                    onChange={(e) => handleChange('title', e.target.value)}
+                    placeholder="mis. Finance & Accounting Staff" />
                 </Field>
                 <Field label="Perusahaan" required>
-                  <input className="input" value={form.company} onChange={(e) => handleChange('company', e.target.value)} />
+                  <select className="input" value={form.company_id}
+                    onChange={(e) => handleChange('company_id', e.target.value)}>
+                    <option value="">— Pilih Perusahaan —</option>
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Departemen">
-                  <input className="input" value={form.department} onChange={(e) => handleChange('department', e.target.value)} placeholder="mis. Finance & Accounting" />
+                  <input className="input" value={form.department}
+                    onChange={(e) => handleChange('department', e.target.value)}
+                    placeholder="mis. Finance & Accounting" />
                 </Field>
                 <Field label="Lokasi">
-                  <input className="input" value={form.location} onChange={(e) => handleChange('location', e.target.value)} placeholder="mis. Pekanbaru, Riau" />
+                  <input className="input" value={form.location}
+                    onChange={(e) => handleChange('location', e.target.value)}
+                    placeholder="mis. Pekanbaru, Riau" />
                 </Field>
                 <Field label="Tipe Pekerjaan">
-                  <select className="input" value={form.employment_type} onChange={(e) => handleChange('employment_type', e.target.value)}>
-                    <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Freelance</option>
+                  <select className="input" value={form.employment_type}
+                    onChange={(e) => handleChange('employment_type', e.target.value)}>
+                    <option>Full-time</option><option>Part-time</option>
+                    <option>Contract</option><option>Internship</option><option>Freelance</option>
                   </select>
                 </Field>
                 <Field label="Level">
-                  <select className="input" value={form.level} onChange={(e) => handleChange('level', e.target.value)}>
+                  <select className="input" value={form.level}
+                    onChange={(e) => handleChange('level', e.target.value)}>
                     <option value="">— Pilih Level —</option>
-                    <option>Entry Level</option><option>Junior</option><option>Mid Level</option><option>Senior</option><option>Manager</option><option>Director</option>
+                    <option>Entry Level</option><option>Junior</option><option>Mid Level</option>
+                    <option>Senior</option><option>Manager</option><option>Director</option>
                   </select>
                 </Field>
                 <Field label="Pengaturan Kerja">
-                  <select className="input" value={form.work_arrangement} onChange={(e) => handleChange('work_arrangement', e.target.value)}>
+                  <select className="input" value={form.work_arrangement}
+                    onChange={(e) => handleChange('work_arrangement', e.target.value)}>
                     <option>On-site</option><option>Remote</option><option>Hybrid</option>
                   </select>
                 </Field>
                 <Field label="Closing Date">
-                  <input className="input" type="date" value={form.closing_date} onChange={(e) => handleChange('closing_date', e.target.value)} />
+                  <input className="input" type="date" value={form.closing_date}
+                    onChange={(e) => handleChange('closing_date', e.target.value)} />
                 </Field>
               </div>
 
               <Field label="Deskripsi Pekerjaan">
-                <textarea className="input h-28 resize-y" value={form.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Gambaran umum posisi…" />
+                <textarea className="input h-28 resize-y" value={form.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  placeholder="Gambaran umum posisi…" />
               </Field>
               <Field label="Tanggung Jawab">
-                <textarea className="input h-28 resize-y" value={form.responsibilities} onChange={(e) => handleChange('responsibilities', e.target.value)} placeholder="Satu tanggung jawab per baris…" />
+                <textarea className="input h-28 resize-y" value={form.responsibilities}
+                  onChange={(e) => handleChange('responsibilities', e.target.value)}
+                  placeholder="Satu tanggung jawab per baris…" />
               </Field>
               <Field label="Persyaratan">
-                <textarea className="input h-28 resize-y" value={form.requirements} onChange={(e) => handleChange('requirements', e.target.value)} placeholder="Satu persyaratan per baris…" />
+                <textarea className="input h-28 resize-y" value={form.requirements}
+                  onChange={(e) => handleChange('requirements', e.target.value)}
+                  placeholder="Satu persyaratan per baris…" />
               </Field>
               <Field label="Benefit">
-                <textarea className="input h-20 resize-y" value={form.benefits} onChange={(e) => handleChange('benefits', e.target.value)} placeholder="Satu benefit per baris…" />
+                <textarea className="input h-20 resize-y" value={form.benefits}
+                  onChange={(e) => handleChange('benefits', e.target.value)}
+                  placeholder="Satu benefit per baris…" />
               </Field>
               <Field label="Status">
-                <select className="input" value={form.status} onChange={(e) => handleChange('status', e.target.value as JobStatus)}>
+                <select className="input" value={form.status}
+                  onChange={(e) => handleChange('status', e.target.value as JobStatus)}>
                   <option value="draft">Draft (tidak terlihat kandidat)</option>
                   <option value="published">Published / Open (terlihat kandidat)</option>
                   <option value="closed">Closed (ditutup)</option>
