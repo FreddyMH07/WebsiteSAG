@@ -320,23 +320,6 @@ export default function Home() {
           {/* Latest jobs preview */}
           <LatestJobsPreview switchTab={switchTab} />
 
-          {/* Anti-fraud notice */}
-          <section className="bg-amber-50 border-y border-amber-200 py-5">
-            <div className="container-page flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-black text-amber-800">⚠️ {t('Perhatian Pelamar', 'Notice to Applicants')}</p>
-                <p className="mt-1 text-sm text-amber-700">
-                  {t(
-                    'Rekrutmen PT SAG tidak pernah memungut biaya apapun. Waspada penipuan yang mengatasnamakan SAG.',
-                    "SAG recruitment never charges any fees. Beware of fraud using SAG's name.",
-                  )}
-                </p>
-              </div>
-              <Link to="/contact" className="flex-shrink-0 rounded-full border border-amber-400 bg-white px-5 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-100 transition">
-                {t('Hubungi Kami', 'Contact Us')}
-              </Link>
-            </div>
-          </section>
         </main>
       )}
 
