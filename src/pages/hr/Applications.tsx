@@ -35,34 +35,49 @@ function downloadCSV(rows: ApplicationRow[]) {
   URL.revokeObjectURL(url);
 }
 
+interface CompanyOption { id: string; name: string; short_name: string | null; }
+
 export default function HRApplications() {
   const [searchParams] = useSearchParams();
-  const [applications, setApplications] = useState<ApplicationRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [jobSlugFilter, setJobSlugFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [applications, setApplications]       = useState<ApplicationRow[]>([]);
+  const [companies,    setCompanies]           = useState<CompanyOption[]>([]);
+  const [jobCompanyMap, setJobCompanyMap]      = useState<Record<string, string>>({}); // job_id → company_id
+  const [loading, setLoading]                  = useState(true);
+  const [search,        setSearch]             = useState('');
+  const [statusFilter,  setStatusFilter]       = useState('');
+  const [jobSlugFilter, setJobSlugFilter]      = useState('');
+  const [companyFilter, setCompanyFilter]      = useState('');
+  const [deptFilter,    setDeptFilter]         = useState('');
+  const [dateFrom,      setDateFrom]           = useState('');
+  const [dateTo,        setDateTo]             = useState('');
 
   // Initialize filters from URL query params on first mount
   useEffect(() => {
     const sp = searchParams.get('status');
     const jp = searchParams.get('job');
+    const cp = searchParams.get('company');
     if (sp) setStatusFilter(sp === 'submitted' ? 'Applied' : sp);
     if (jp) setJobSlugFilter(jp);
+    if (cp) setCompanyFilter(cp);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
-          .from('applications')
-          .select('*, candidates(full_name, email, phone, domicile, cv_url)')
-          .order('created_at', { ascending: false });
+        const [{ data }, { data: jobsData }, { data: coData }] = await Promise.all([
+          supabase
+            .from('applications')
+            .select('*, candidates(full_name, email, phone, domicile, cv_url)')
+            .order('created_at', { ascending: false }),
+          supabase.from('jobs').select('id, company_id'),
+          supabase.from('companies').select('id, name, short_name').order('name'),
+        ]);
         setApplications((data ?? []) as ApplicationRow[]);
+        setCompanies((coData ?? []) as CompanyOption[]);
+        const map: Record<string, string> = {};
+        (jobsData ?? []).forEach((j) => { if (j.company_id) map[j.id] = j.company_id; });
+        setJobCompanyMap(map);
       } finally {
         setLoading(false);
       }
@@ -82,15 +97,20 @@ export default function HRApplications() {
       matchStatus = app.status === statusFilter;
     }
     const matchJob = !jobSlugFilter || app.job_slug === jobSlugFilter;
+    const jobId = (app as unknown as Record<string, unknown>).job_id as string | null;
+    const matchCompany = !companyFilter || (jobId ? jobCompanyMap[jobId] === companyFilter : false);
     const matchDept = !deptFilter || jobTitle.includes(deptFilter.toLowerCase());
     const appliedDate = new Date(app.created_at).toISOString().split('T')[0];
     const matchFrom = !dateFrom || appliedDate >= dateFrom;
     const matchTo = !dateTo || appliedDate <= dateTo;
-    return matchSearch && matchStatus && matchJob && matchDept && matchFrom && matchTo;
+    return matchSearch && matchStatus && matchJob && matchCompany && matchDept && matchFrom && matchTo;
   });
 
-  const clearFilters = () => { setSearch(''); setStatusFilter(''); setJobSlugFilter(''); setDeptFilter(''); setDateFrom(''); setDateTo(''); };
-  const hasFilters = search || statusFilter || jobSlugFilter || deptFilter || dateFrom || dateTo;
+  const clearFilters = () => {
+    setSearch(''); setStatusFilter(''); setJobSlugFilter('');
+    setCompanyFilter(''); setDeptFilter(''); setDateFrom(''); setDateTo('');
+  };
+  const hasFilters = search || statusFilter || jobSlugFilter || companyFilter || deptFilter || dateFrom || dateTo;
 
   return (
     <>
@@ -116,6 +136,12 @@ export default function HRApplications() {
             <option value="">All Status</option>
             <option value={IN_PROGRESS_PARAM}>In Progress (All)</option>
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select className="input w-auto min-w-[160px] text-sm" value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+            <option value="">Semua Perusahaan</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>{c.short_name ?? c.name}</option>
+            ))}
           </select>
           <select className="input w-auto min-w-[150px] text-sm" value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
             <option value="">All Departments</option>

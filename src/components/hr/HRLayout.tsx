@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import HelpDesk from '@/components/hr/HelpDesk';
 import { LayoutDashboard, Users, FileText, Menu, LogOut, ChevronRight, Briefcase, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { sagAssets } from '@/data/siteContent';
@@ -101,6 +102,9 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* Helpdesk widget — mounts on all HR pages, never printed */}
+      <HelpDesk />
     </div>
   );
 }

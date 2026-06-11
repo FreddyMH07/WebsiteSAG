@@ -54,6 +54,37 @@ export async function sendPartnershipForm(payload: ContactPayload) {
   });
 }
 
+interface HelpdeskPayload {
+  hrName: string;
+  hrEmail: string;
+  pageUrl: string;
+  kategori: string;
+  subjek: string;
+  deskripsi: string;
+}
+
+export async function sendHelpdeskTicket(payload: HelpdeskPayload) {
+  const message = [
+    `Kategori : ${payload.kategori}`,
+    `Subjek   : ${payload.subjek}`,
+    ``,
+    `Deskripsi:`,
+    payload.deskripsi,
+    ``,
+    `--- Info Teknis ---`,
+    `Pengirim : ${payload.hrName} <${payload.hrEmail}>`,
+    `Halaman  : ${payload.pageUrl}`,
+    `Waktu    : ${new Date().toLocaleString('id-ID')}`,
+  ].join('\n');
+
+  return submitForm({
+    subject: `[Helpdesk SAG] ${payload.kategori}: ${payload.subjek}`,
+    name:    payload.hrName,
+    email:   payload.hrEmail,
+    message,
+  });
+}
+
 export async function sendApplyNotification(payload: ApplyNotificationPayload) {
   const message = [
     `Kandidat Baru Melamar`,

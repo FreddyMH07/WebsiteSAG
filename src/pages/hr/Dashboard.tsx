@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Users, FileText, Clock, CheckCircle, ArrowRight, AlertCircle } from 'lucide-react';
+import { Users, FileText, Clock, CheckCircle, ArrowRight, AlertCircle, Briefcase } from 'lucide-react';
 import HRLayout from '@/components/hr/HRLayout';
 import Spinner from '@/components/common/Spinner';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -17,18 +17,59 @@ const STATUS_PARAM: Record<string, string> = {
   'Rejected':     'Rejected',
 };
 
+interface PerPT { id: string; name: string; count: number; }
+
 export default function HRDashboard() {
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
+  const [jobsOpen,   setJobsOpen]   = useState(0);
+  const [jobsClosed, setJobsClosed] = useState(0);
+  const [perPT,      setPerPT]      = useState<PerPT[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
-          .from('applications')
-          .select('*, candidates(full_name, email, phone)')
-          .order('created_at', { ascending: false });
-        setApplications((data ?? []) as ApplicationRow[]);
+        const [{ data: appData }, { data: jobsData }] = await Promise.all([
+          supabase
+            .from('applications')
+            .select('*, candidates(full_name, email, phone)')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('jobs')
+            .select('id, status, company_id, companies(id, name, short_name)'),
+        ]);
+
+        const apps = (appData ?? []) as ApplicationRow[];
+        setApplications(apps);
+
+        // Jobs open / closed counts
+        setJobsOpen(  (jobsData ?? []).filter((j) => j.status === 'published').length);
+        setJobsClosed((jobsData ?? []).filter((j) => j.status === 'closed').length);
+
+        // Build job_id → company map
+        type CoInfo = { id: string; name: string };
+        const jobCoMap: Record<string, CoInfo> = {};
+        (jobsData ?? []).forEach((j) => {
+          if (!j.company_id) return;
+          const co = j.companies as unknown as { id: string; name: string } | null;
+          if (co) jobCoMap[j.id] = { id: co.id, name: co.name };
+        });
+
+        // Aggregate applications per company
+        const acc: Record<string, { name: string; count: number }> = {};
+        apps.forEach((app) => {
+          const jobId = (app as unknown as Record<string, unknown>).job_id as string | null;
+          const co = jobId ? jobCoMap[jobId] : null;
+          const key  = co?.id   ?? 'holding';
+          const name = co?.name ?? 'PT Sahabat Agro Group';
+          if (!acc[key]) acc[key] = { name, count: 0 };
+          acc[key].count++;
+        });
+        setPerPT(
+          Object.entries(acc)
+            .map(([id, { name, count }]) => ({ id, name, count }))
+            .sort((a, b) => b.count - a.count)
+        );
       } finally {
         setLoading(false);
       }
@@ -62,6 +103,25 @@ export default function HRDashboard() {
         <p className="text-sm text-slate-500">
           Recruitment overview — {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
+      </div>
+
+      {/* Jobs Open / Closed cards */}
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        {[
+          { label: 'Jobs Open',   value: jobsOpen,   color: 'bg-green-100 text-green-700',  to: '/hr/jobs?tab=published' },
+          { label: 'Jobs Closed', value: jobsClosed, color: 'bg-slate-100 text-slate-500',  to: '/hr/jobs?tab=closed' },
+        ].map(({ label, value, color, to }) => (
+          <Link key={label} to={to}
+            className="card flex items-center gap-4 p-5 transition hover:shadow-lg hover:-translate-y-0.5 cursor-pointer">
+            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${color}`}>
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-3xl font-black text-slate-800">{value}</p>
+              <p className="text-xs text-slate-500">{label}</p>
+            </div>
+          </Link>
+        ))}
       </div>
 
       {/* Overview stat cards — each is a link */}
@@ -102,7 +162,7 @@ export default function HRDashboard() {
         })}
       </div>
 
-      {/* Bottom: Recent Applications + Perlu Tindakan */}
+      {/* Bottom: Recent + Perlu Tindakan + per-PT */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Applications */}
         <div className="card overflow-hidden">
@@ -133,6 +193,31 @@ export default function HRDashboard() {
                     Detail
                   </Link>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Lamaran per Perusahaan */}
+        <div className="card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 p-5">
+            <h2 className="font-black text-sag-green">Lamaran per Perusahaan</h2>
+          </div>
+          {perPT.length === 0 ? (
+            <p className="px-5 py-8 text-center text-sm text-slate-400">Belum ada data.</p>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {perPT.map(({ id, name, count }) => (
+                <Link
+                  key={id}
+                  to={id === 'holding' ? '/hr/applications' : `/hr/applications?company=${id}`}
+                  className="flex items-center justify-between px-5 py-3 hover:bg-sag-mist/40 transition"
+                >
+                  <span className="truncate text-sm font-semibold text-slate-700">{name}</span>
+                  <span className="ml-3 flex-shrink-0 rounded-full bg-sag-green/10 px-3 py-0.5 text-xs font-bold text-sag-green">
+                    {count}
+                  </span>
+                </Link>
               ))}
             </div>
           )}

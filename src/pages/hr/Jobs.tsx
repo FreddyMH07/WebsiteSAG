@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Pencil, ToggleLeft, ToggleRight, AlertTriangle, X, Search, ExternalLink } from 'lucide-react';
 import HRLayout from '@/components/hr/HRLayout';
 import Spinner from '@/components/common/Spinner';
@@ -119,10 +119,14 @@ function Field({ label, required, children }: { label: string; required?: boolea
 
 export default function HRJobs() {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [jobs, setJobs] = useState<HRJob[]>([]);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'published' | 'draft' | 'closed'>('published');
+  const [tab, setTab] = useState<'published' | 'draft' | 'closed'>(() => {
+    const t = searchParams.get('tab');
+    return (t === 'closed' || t === 'draft') ? t : 'published';
+  });
   const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
 
