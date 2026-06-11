@@ -54,6 +54,7 @@ export interface Application {
   candidate_id: string;
   job_id: string | null;
   job_slug: string | null;
+  job_title: string | null;
   status: ApplicationStatus;
   expected_salary: string | null;
   availability: string | null;

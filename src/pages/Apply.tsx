@@ -84,14 +84,10 @@ export default function Apply() {
 
     if (!cvUrl) { toast('Silakan upload CV Anda sebelum melamar.', 'error'); return; }
 
-    // job_id NOT NULL di DB — cari dari Supabase jobs table by slug
-    const { data: jobRow } = await supabase.from('jobs').select('id').eq('slug', job.slug).maybeSingle();
-    if (!jobRow) { toast('Lowongan tidak ditemukan. Silakan refresh dan coba lagi.', 'error'); return; }
-
     const { error } = await supabase.from('applications').insert({
       candidate_id: candidate.id,
-      job_id: jobRow.id,
       job_slug: job.slug,
+      job_title: job.title,
       status: 'Applied',
       expected_salary: data.expected_salary,
       availability: data.availability,

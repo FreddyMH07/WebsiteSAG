@@ -17,7 +17,7 @@ function downloadCSV(rows: ApplicationRow[]) {
     r.candidates?.full_name ?? '',
     r.candidates?.email ?? '',
     r.candidates?.phone ?? '',
-    r.jobs?.title ?? r.job_slug ?? '',
+    r.job_title ?? r.jobs?.title ?? r.job_slug ?? '',
     r.status,
     new Date(r.created_at).toLocaleDateString('id-ID'),
     r.expected_salary ?? '',
@@ -140,7 +140,7 @@ export default function HRApplications() {
                       <p className="text-xs text-slate-400">{app.candidates?.email}</p>
                       <p className="text-xs text-slate-400">{app.candidates?.phone}</p>
                     </td>
-                    <td className="table-cell font-semibold text-sag-green">{app.jobs?.title ?? app.job_slug ?? '—'}</td>
+                    <td className="table-cell font-semibold text-sag-green">{app.job_title ?? app.jobs?.title ?? app.job_slug ?? '—'}</td>
                     <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
                     <td className="table-cell text-slate-500 whitespace-nowrap">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                     <td className="table-cell text-slate-600">{app.expected_salary ?? '—'}</td>

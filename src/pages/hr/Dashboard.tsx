@@ -111,7 +111,7 @@ export default function HRDashboard() {
                     <p className="font-semibold text-slate-800">{app.candidates?.full_name ?? '—'}</p>
                     <p className="text-xs text-slate-400">{app.candidates?.email}</p>
                   </td>
-                  <td className="table-cell font-semibold text-sag-green">{app.jobs?.title ?? app.job_slug ?? '—'}</td>
+                  <td className="table-cell font-semibold text-sag-green">{app.job_title ?? app.jobs?.title ?? app.job_slug ?? '—'}</td>
                   <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
                   <td className="table-cell text-slate-500">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                   <td className="table-cell">

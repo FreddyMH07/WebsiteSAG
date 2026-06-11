@@ -36,6 +36,7 @@ type ApplicationRow = {
   candidate_id: string;
   job_id: string | null;
   job_slug: string | null;
+  job_title: string | null;
   status: 'Applied' | 'Screening HR' | 'Psikotes' | 'Interview HR' | 'Interview User' | 'Offering' | 'Accepted' | 'Rejected' | 'Talent Pool';
   expected_salary: string | null;
   availability: string | null;
