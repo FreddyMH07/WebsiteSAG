@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Menu, LogOut, ChevronRight, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Menu, LogOut, ChevronRight, Briefcase, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { sagAssets } from '@/data/siteContent';
 
@@ -8,7 +8,8 @@ const menu = [
   { label: 'Dashboard', href: '/hr/dashboard', icon: LayoutDashboard },
   { label: 'Jobs', href: '/hr/jobs', icon: Briefcase },
   { label: 'Applications', href: '/hr/applications', icon: FileText },
-  { label: 'Candidates', href: '/hr/candidates', icon: Users },
+  { label: 'Candidates',  href: '/hr/candidates',  icon: Users },
+  { label: 'Perusahaan',  href: '/hr/companies',   icon: Building2 },
 ];
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {

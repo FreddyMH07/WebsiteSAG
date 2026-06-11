@@ -32,6 +32,9 @@ export default function HRApplicationDetail() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [candProfile, setCandProfile] = useState<CandidateProfile | null>(null);
   const [notes, setNotes] = useState<ApplicationNote[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<{
+    name: string; short_name: string | null; logo_url: string | null; address: string | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState<ApplicationStatus>('Applied');
   const [newNote, setNewNote] = useState('');
@@ -56,6 +59,18 @@ export default function HRApplicationDetail() {
             .eq('candidate_id', cand.id)
             .maybeSingle();
           setCandProfile((cp as CandidateProfile) ?? null);
+        }
+        const jobId = (appData as Record<string, unknown>).job_id as string | null;
+        if (jobId) {
+          const { data: jobData } = await supabase
+            .from('jobs')
+            .select('companies(name, short_name, logo_url, address)')
+            .eq('id', jobId)
+            .maybeSingle();
+          const co = (jobData as Record<string, unknown> | null)?.companies as {
+            name: string; short_name: string | null; logo_url: string | null; address: string | null;
+          } | null;
+          setCompanyInfo(co ?? null);
         }
       }
       setNotes((noteData ?? []) as ApplicationNote[]);
@@ -96,20 +111,28 @@ export default function HRApplicationDetail() {
     <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
     <HRLayout>
       {/* Print header — only visible when printing */}
-      <div className="hidden print:block print:mb-6">
-        <div className="flex items-center gap-4 border-b-2 border-sag-green pb-4">
-          <img
-            src="/assets/sag/brand/logo-ptsag.png"
-            alt="PT Sahabat Agro Group"
-            className="h-16 w-auto"
-          />
-          <div>
-            <p className="text-xl font-black text-sag-green">PT SAHABAT AGRO GROUP</p>
-            <p className="text-sm font-bold text-slate-700">EMPLOYMENT APPLICATION FORM — Formulir Lamaran Kerja</p>
-            <p className="text-xs text-slate-500">Dicetak: {new Date().toLocaleDateString('id-ID')}</p>
+      {(() => {
+        const co = companyInfo ?? {
+          name: 'PT Sahabat Agro Group',
+          short_name: 'SAG',
+          logo_url: '/assets/sag/brand/logo-ptsag.png',
+          address: null,
+        };
+        const logoUrl = co.logo_url ?? '/assets/sag/brand/logo-ptsag.png';
+        return (
+          <div className="hidden print:block print:mb-6">
+            <div className="flex items-center gap-4 border-b-2 border-sag-green pb-4">
+              <img src={logoUrl} alt={co.name} className="h-16 w-auto object-contain" />
+              <div>
+                <p className="text-xl font-black text-sag-green">{co.name.toUpperCase()}</p>
+                {co.address && <p className="text-xs text-slate-600">{co.address}</p>}
+                <p className="text-sm font-bold text-slate-700">EMPLOYMENT APPLICATION FORM — Formulir Lamaran Kerja</p>
+                <p className="text-xs text-slate-500">Dicetak: {new Date().toLocaleDateString('id-ID')}</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       <div className="mb-6 print:hidden">
         <Link to="/hr/applications" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-sag-green transition mb-4">

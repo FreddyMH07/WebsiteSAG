@@ -30,6 +30,7 @@ import HRJobs from '@/pages/hr/Jobs';
 import HRApplications from '@/pages/hr/Applications';
 import HRApplicationDetail from '@/pages/hr/ApplicationDetail';
 import HRCandidates from '@/pages/hr/Candidates';
+import HRCompanies from '@/pages/hr/Companies';
 
 import NotFound from '@/pages/NotFound';
 
@@ -73,6 +74,7 @@ export default function App() {
                 <Route path="/hr/applications" element={<HRApplications />} />
                 <Route path="/hr/applications/:id" element={<HRApplicationDetail />} />
                 <Route path="/hr/candidates" element={<HRCandidates />} />
+                <Route path="/hr/companies" element={<HRCompanies />} />
               </Route>
 
               {/* Legacy redirects */}
