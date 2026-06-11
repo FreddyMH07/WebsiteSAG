@@ -103,9 +103,16 @@ export default function HRLogin() {
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs text-slate-400">
-              <Link to="/candidate/login" className="hover:underline">Kandidat? Masuk di sini</Link>
-            </p>
+            <div className="mt-5 space-y-2 text-center text-xs text-slate-400">
+              <p>
+                <Link to="/forgot-password" className="hover:text-sag-green hover:underline transition">
+                  Lupa Password?
+                </Link>
+              </p>
+              <p>
+                <Link to="/candidate/login" className="hover:underline">Kandidat? Masuk di sini</Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

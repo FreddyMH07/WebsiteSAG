@@ -179,6 +179,11 @@ export default function CandidateLogin() {
                     </button>
                   </div>
                   {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+                  <div className="mt-1.5 text-right">
+                    <Link to="/forgot-password" className="text-xs text-slate-400 hover:text-sag-green transition">
+                      {t('Lupa Password?', 'Forgot password?')}
+                    </Link>
+                  </div>
                 </div>
 
                 <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-3">

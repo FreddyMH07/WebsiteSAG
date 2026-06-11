@@ -13,6 +13,8 @@ import JobDetail from '@/pages/JobDetail';
 import Apply from '@/pages/Apply';
 import ThankYou from '@/pages/ThankYou';
 import Contact from '@/pages/Contact';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 
 // Candidate pages
 import CandidateRegister from '@/pages/candidate/Register';
@@ -46,6 +48,8 @@ export default function App() {
               <Route path="/apply/:slug" element={<Apply />} />
               <Route path="/thank-you" element={<ThankYou />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Candidate auth */}
               <Route path="/candidate/register" element={<CandidateRegister />} />
