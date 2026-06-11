@@ -26,6 +26,7 @@ import CandidateApplications from '@/pages/candidate/Applications';
 // HR pages
 import HRLogin from '@/pages/hr/Login';
 import HRDashboard from '@/pages/hr/Dashboard';
+import HRJobs from '@/pages/hr/Jobs';
 import HRApplications from '@/pages/hr/Applications';
 import HRApplicationDetail from '@/pages/hr/ApplicationDetail';
 import HRCandidates from '@/pages/hr/Candidates';
@@ -68,6 +69,7 @@ export default function App() {
               {/* HR protected */}
               <Route element={<ProtectedRoute requiredRole="admin" redirectTo="/hr/login" />}>
                 <Route path="/hr/dashboard" element={<HRDashboard />} />
+                <Route path="/hr/jobs" element={<HRJobs />} />
                 <Route path="/hr/applications" element={<HRApplications />} />
                 <Route path="/hr/applications/:id" element={<HRApplicationDetail />} />
                 <Route path="/hr/candidates" element={<HRCandidates />} />

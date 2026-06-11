@@ -7,7 +7,7 @@ import Spinner from '@/components/common/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
-import { getActiveJobs } from '@/lib/contentful';
+import { getActiveJobs } from '@/lib/jobs';
 import ProfileStepper from '@/components/candidate/profile/ProfileStepper';
 import Section1Position from '@/components/candidate/profile/Section1Position';
 import Section2PersonalData from '@/components/candidate/profile/Section2PersonalData';

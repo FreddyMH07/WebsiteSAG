@@ -6,7 +6,7 @@ import Footer from '@/components/common/Footer';
 import Spinner from '@/components/common/Spinner';
 import SEO from '@/components/common/SEO';
 import { sagAssets, careerDepartments, employmentTypes } from '@/data/siteContent';
-import { getActiveJobs } from '@/lib/contentful';
+import { getActiveJobs } from '@/lib/jobs';
 import type { ContentfulJob } from '@/types';
 
 export default function Jobs() {

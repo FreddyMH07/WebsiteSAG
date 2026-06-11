@@ -89,22 +89,6 @@ export interface ApplicationNote {
   created_at: string;
 }
 
-// ─── Job (Contentful or Supabase) ─────────────────────────────────────────────
-
-export interface Job {
-  id: string;
-  title: string;
-  slug: string;
-  department: string;
-  location: string;
-  employment_type: string;
-  description: string;
-  requirements: string;
-  status: 'active' | 'inactive' | 'closed';
-  deadline: string | null;
-  created_at?: string;
-}
-
 // ─── Candidate Profile (SAG Employment Application Form) ──────────────────────
 
 export type FamilyMember = { relation: string; name: string; gender: string; age: string; occupation: string; address: string };
@@ -162,19 +146,21 @@ export interface CandidateProfile {
 
 export type CandidateProfilePatch = Partial<CandidateProfile> & { full_name?: string; phone?: string };
 
-// ─── Contentful — Job Vacancy ─────────────────────────────────────────────────
+// ─── Job (Supabase jobs table) ────────────────────────────────────────────────
 
-export interface ContentfulJob {
+export interface Job {
   id: string;
   title: string;
   slug: string;
+  company?: string;
   department: string;
-  employmentType: string;        // maps from Contentful field "type"
+  employmentType: string;
   location: string;
-  descriptionEnglish?: string;
-  descriptionIndonesian?: string;
+  description?: string;
   requirements?: string;
-  displayOrder?: number;
   isOpen: boolean;
   closingDate?: string;
 }
+
+/** @deprecated use Job */
+export type ContentfulJob = Job;

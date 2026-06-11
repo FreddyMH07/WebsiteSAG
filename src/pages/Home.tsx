@@ -10,7 +10,7 @@ import Spinner from '@/components/common/Spinner';
 import SEO from '@/components/common/SEO';
 import { useLang } from '@/hooks/useLang';
 import { sagAssets, companyStats, benefits, careerDepartments, employmentTypes } from '@/data/siteContent';
-import { getActiveJobs } from '@/lib/contentful';
+import { getActiveJobs } from '@/lib/jobs';
 import type { ContentfulJob } from '@/types';
 
 const SITE_URL = 'https://career.sahabatagro.co.id';

@@ -6,7 +6,7 @@ import Footer from '@/components/common/Footer';
 import Spinner from '@/components/common/Spinner';
 import SEO from '@/components/common/SEO';
 import { useAuth } from '@/hooks/useAuth';
-import { getJobBySlug } from '@/lib/contentful';
+import { getJobBySlug } from '@/lib/jobs';
 import type { ContentfulJob } from '@/types';
 
 const SITE_URL = 'https://career.sahabatagro.co.id';
@@ -16,7 +16,7 @@ function buildJobPosting(job: ContentfulJob) {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
-    description: job.descriptionIndonesian || job.descriptionEnglish || job.requirements || job.title,
+    description: job.description || job.requirements || job.title,
     datePosted: new Date().toISOString().split('T')[0],
     ...(job.closingDate ? { validThrough: job.closingDate } : {}),
     employmentType: job.employmentType?.toUpperCase().replace(' ', '_') ?? 'FULL_TIME',
@@ -80,7 +80,7 @@ export default function JobDetail() {
     navigate(`/apply/${slug}`);
   };
 
-  const description = job.descriptionIndonesian || job.descriptionEnglish;
+  const description = job.description;
 
   return (
     <>

@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
 import { sendApplyNotification } from '@/lib/web3forms';
-import { getJobBySlug } from '@/lib/contentful';
+import { getJobBySlug } from '@/lib/jobs';
 import type { ContentfulJob, Candidate } from '@/types';
 
 const schema = z.object({
