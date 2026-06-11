@@ -36,12 +36,11 @@ type ApplicationRow = {
   candidate_id: string;
   job_id: string | null;
   job_slug: string | null;
-  job_title: string;
-  status: 'submitted' | 'screening' | 'interview' | 'offering' | 'accepted' | 'rejected';
+  status: 'Applied' | 'Screening HR' | 'Psikotes' | 'Interview HR' | 'Interview User' | 'Offering' | 'Accepted' | 'Rejected' | 'Talent Pool';
   expected_salary: string | null;
   availability: string | null;
   cover_note: string | null;
-  applied_at: string;
+  created_at: string;
   updated_at: string | null;
 };
 
@@ -68,8 +67,8 @@ export interface Database {
       };
       applications: {
         Row: ApplicationRow;
-        Insert: Omit<ApplicationRow, 'id' | 'applied_at'> & { id?: string };
-        Update: Partial<Omit<ApplicationRow, 'id' | 'applied_at'>>;
+        Insert: Omit<ApplicationRow, 'id' | 'created_at'> & { id?: string };
+        Update: Partial<Omit<ApplicationRow, 'id' | 'created_at'>>;
       };
       application_notes: {
         Row: ApplicationNoteRow;

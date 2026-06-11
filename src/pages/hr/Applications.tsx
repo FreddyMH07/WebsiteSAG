@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { careerDepartments } from '@/data/siteContent';
 import type { ApplicationRow, ApplicationStatus } from '@/types';
 
-const STATUS_OPTIONS: ApplicationStatus[] = ['submitted', 'screening', 'interview', 'offering', 'accepted', 'rejected'];
+const STATUS_OPTIONS: ApplicationStatus[] = ['Applied', 'Screening HR', 'Psikotes', 'Interview HR', 'Interview User', 'Offering', 'Accepted', 'Rejected', 'Talent Pool'];
 
 function downloadCSV(rows: ApplicationRow[]) {
   const headers = ['Name', 'Email', 'Phone', 'Position', 'Status', 'Applied', 'Expected Salary', 'Availability'];
@@ -17,9 +17,9 @@ function downloadCSV(rows: ApplicationRow[]) {
     r.candidates?.full_name ?? '',
     r.candidates?.email ?? '',
     r.candidates?.phone ?? '',
-    r.job_title,
+    r.jobs?.title ?? r.job_slug ?? '',
     r.status,
-    new Date(r.applied_at).toLocaleDateString('id-ID'),
+    new Date(r.created_at).toLocaleDateString('id-ID'),
     r.expected_salary ?? '',
     r.availability ?? '',
   ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
@@ -47,8 +47,8 @@ export default function HRApplications() {
       try {
         const { data } = await supabase
           .from('applications')
-          .select('*, candidates(full_name, email, phone, domicile, cv_url)')
-          .order('applied_at', { ascending: false });
+          .select('*, candidates(full_name, email, phone, domicile, cv_url), jobs(title, department, location)')
+          .order('created_at', { ascending: false });
         setApplications((data ?? []) as ApplicationRow[]);
       } finally {
         setLoading(false);
@@ -60,10 +60,11 @@ export default function HRApplications() {
     const name = app.candidates?.full_name?.toLowerCase() ?? '';
     const email = app.candidates?.email?.toLowerCase() ?? '';
     const q = search.toLowerCase();
-    const matchSearch = !q || name.includes(q) || email.includes(q) || app.job_title.toLowerCase().includes(q);
+    const jobTitle = (app.jobs?.title ?? app.job_slug ?? '').toLowerCase();
+    const matchSearch = !q || name.includes(q) || email.includes(q) || jobTitle.includes(q);
     const matchStatus = !statusFilter || app.status === statusFilter;
-    const matchDept = !deptFilter || app.job_title.toLowerCase().includes(deptFilter.toLowerCase());
-    const appliedDate = new Date(app.applied_at).toISOString().split('T')[0];
+    const matchDept = !deptFilter || jobTitle.includes(deptFilter.toLowerCase());
+    const appliedDate = new Date(app.created_at).toISOString().split('T')[0];
     const matchFrom = !dateFrom || appliedDate >= dateFrom;
     const matchTo = !dateTo || appliedDate <= dateTo;
     return matchSearch && matchStatus && matchDept && matchFrom && matchTo;
@@ -139,9 +140,9 @@ export default function HRApplications() {
                       <p className="text-xs text-slate-400">{app.candidates?.email}</p>
                       <p className="text-xs text-slate-400">{app.candidates?.phone}</p>
                     </td>
-                    <td className="table-cell font-semibold text-sag-green">{app.job_title}</td>
+                    <td className="table-cell font-semibold text-sag-green">{app.jobs?.title ?? app.job_slug ?? '—'}</td>
                     <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
-                    <td className="table-cell text-slate-500 whitespace-nowrap">{new Date(app.applied_at).toLocaleDateString('id-ID')}</td>
+                    <td className="table-cell text-slate-500 whitespace-nowrap">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                     <td className="table-cell text-slate-600">{app.expected_salary ?? '—'}</td>
                     <td className="table-cell">
                       {app.candidates?.cv_url ? (

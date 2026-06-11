@@ -11,12 +11,15 @@ import { supabase } from '@/lib/supabase';
 import type { ApplicationRow, ApplicationNote, ApplicationStatus, Candidate } from '@/types';
 
 const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'screening', label: 'Screening' },
-  { value: 'interview', label: 'Interview' },
-  { value: 'offering', label: 'Offering' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'Applied',        label: 'Applied' },
+  { value: 'Screening HR',   label: 'Screening HR' },
+  { value: 'Psikotes',       label: 'Psikotes' },
+  { value: 'Interview HR',   label: 'Interview HR' },
+  { value: 'Interview User', label: 'Interview User' },
+  { value: 'Offering',       label: 'Offering' },
+  { value: 'Accepted',       label: 'Accepted' },
+  { value: 'Rejected',       label: 'Rejected' },
+  { value: 'Talent Pool',    label: 'Talent Pool' },
 ];
 
 export default function HRApplicationDetail() {
@@ -28,14 +31,14 @@ export default function HRApplicationDetail() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [notes, setNotes] = useState<ApplicationNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newStatus, setNewStatus] = useState<ApplicationStatus>('submitted');
+  const [newStatus, setNewStatus] = useState<ApplicationStatus>('Applied');
   const [newNote, setNewNote] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      supabase.from('applications').select('*, candidates(*)').eq('id', id).single(),
+      supabase.from('applications').select('*, candidates(*), jobs(title, department, location)').eq('id', id).single(),
       supabase.from('application_notes').select('*').eq('application_id', id).order('created_at', { ascending: true }),
     ]).then(([{ data: appData }, { data: noteData }]) => {
       if (appData) {
@@ -86,9 +89,9 @@ export default function HRApplicationDetail() {
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-sag-green">{app.job_title}</h1>
+            <h1 className="text-2xl font-black text-sag-green">{(app as any).jobs?.title ?? app.job_slug ?? '—'}</h1>
             <p className="mt-1 text-sm text-slate-500">
-              Application ID: {app.id} · Applied {new Date(app.applied_at).toLocaleDateString('id-ID')}
+              Application ID: {app.id} · Applied {new Date(app.created_at).toLocaleDateString('id-ID')}
             </p>
           </div>
           <StatusBadge status={app.status as ApplicationStatus} />
@@ -197,7 +200,7 @@ export default function HRApplicationDetail() {
 
           <div className="card p-5 text-sm text-slate-600">
             <p className="font-bold text-sag-green mb-2">Timeline</p>
-            <p className="text-xs">Applied: {new Date(app.applied_at).toLocaleDateString('id-ID')}</p>
+            <p className="text-xs">Applied: {new Date(app.created_at).toLocaleDateString('id-ID')}</p>
             {app.updated_at && (
               <p className="text-xs mt-1">Last Updated: {new Date(app.updated_at).toLocaleDateString('id-ID')}</p>
             )}

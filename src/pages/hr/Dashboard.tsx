@@ -17,8 +17,8 @@ export default function HRDashboard() {
       try {
         const { data } = await supabase
           .from('applications')
-          .select('*, candidates(full_name, email, phone)')
-          .order('applied_at', { ascending: false });
+          .select('*, candidates(full_name, email, phone), jobs(title, department, location)')
+          .order('created_at', { ascending: false });
         setApplications((data ?? []) as ApplicationRow[]);
       } finally {
         setLoading(false);
@@ -28,9 +28,9 @@ export default function HRDashboard() {
 
   const counts = {
     total: applications.length,
-    newApps: applications.filter((a) => a.status === 'submitted').length,
-    inProgress: applications.filter((a) => ['screening', 'interview', 'offering'].includes(a.status)).length,
-    accepted: applications.filter((a) => a.status === 'accepted').length,
+    newApps: applications.filter((a) => a.status === 'Applied').length,
+    inProgress: applications.filter((a) => ['Screening HR', 'Psikotes', 'Interview HR', 'Interview User', 'Offering'].includes(a.status)).length,
+    accepted: applications.filter((a) => a.status === 'Accepted').length,
   };
 
   const recent = applications.slice(0, 8);
@@ -74,7 +74,7 @@ export default function HRDashboard() {
 
       {/* Status breakdown */}
       <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {(['submitted', 'screening', 'interview', 'offering', 'accepted', 'rejected'] as ApplicationStatus[]).map((status) => {
+        {(['Applied', 'Screening HR', 'Interview HR', 'Offering', 'Accepted', 'Rejected'] as ApplicationStatus[]).map((status) => {
           const count = applications.filter((a) => a.status === status).length;
           return (
             <div key={status} className="card p-4 text-center">
@@ -111,9 +111,9 @@ export default function HRDashboard() {
                     <p className="font-semibold text-slate-800">{app.candidates?.full_name ?? '—'}</p>
                     <p className="text-xs text-slate-400">{app.candidates?.email}</p>
                   </td>
-                  <td className="table-cell font-semibold text-sag-green">{app.job_title}</td>
+                  <td className="table-cell font-semibold text-sag-green">{app.jobs?.title ?? app.job_slug ?? '—'}</td>
                   <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
-                  <td className="table-cell text-slate-500">{new Date(app.applied_at).toLocaleDateString('id-ID')}</td>
+                  <td className="table-cell text-slate-500">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                   <td className="table-cell">
                     <Link to={`/hr/applications/${app.id}`} className="text-xs font-bold text-sag-gold hover:underline">Detail</Link>
                   </td>

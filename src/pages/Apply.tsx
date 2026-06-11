@@ -52,13 +52,18 @@ export default function Apply() {
 
   useEffect(() => {
     if (!slug || !user) { setLoading(false); return; }
-    Promise.all([
-      supabase.from('candidates').select('*').eq('user_id', user.id).single(),
-      supabase.from('applications').select('id').eq('candidate_id', user.id).eq('job_slug', slug).maybeSingle(),
-    ]).then(([{ data: cand }, { data: existing }]) => {
+    (async () => {
+      const { data: cand } = await supabase.from('candidates').select('*').eq('user_id', user.id).single();
       setCandidate(cand ?? null);
-      setAlreadyApplied(!!existing);
-    }).finally(() => setLoading(false));
+      if (cand?.id) {
+        const { data: existing } = await supabase
+          .from('applications').select('id')
+          .eq('candidate_id', cand.id)
+          .eq('job_slug', slug).maybeSingle();
+        setAlreadyApplied(!!existing);
+      }
+      setLoading(false);
+    })();
   }, [slug, user]);
 
   const onSubmit = async (data: FormData) => {
@@ -79,12 +84,15 @@ export default function Apply() {
 
     if (!cvUrl) { toast('Silakan upload CV Anda sebelum melamar.', 'error'); return; }
 
+    // job_id NOT NULL di DB — cari dari Supabase jobs table by slug
+    const { data: jobRow } = await supabase.from('jobs').select('id').eq('slug', job.slug).maybeSingle();
+    if (!jobRow) { toast('Lowongan tidak ditemukan. Silakan refresh dan coba lagi.', 'error'); return; }
+
     const { error } = await supabase.from('applications').insert({
-      candidate_id: user.id,
-      job_id: null,
+      candidate_id: candidate.id,
+      job_id: jobRow.id,
       job_slug: job.slug,
-      job_title: job.title,
-      status: 'submitted',
+      status: 'Applied',
       expected_salary: data.expected_salary,
       availability: data.availability,
       cover_note: data.cover_note,

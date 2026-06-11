@@ -11,13 +11,13 @@ export function exportApplicationsToCSV(applications: ApplicationRow[]) {
     Major: app.candidates?.major ?? '',
     'Experience (years)': app.candidates?.experience_year ?? '',
     'Current Company': app.candidates?.current_company ?? '',
-    'Job Title': app.job_title ?? '',
+    'Job Title': app.jobs?.title ?? app.job_slug ?? '',
     Status: app.status ?? '',
     'Expected Salary': app.expected_salary ?? '',
     Availability: app.availability ?? '',
     'Cover Note': app.cover_note ?? '',
     'CV URL': app.candidates?.cv_url ?? '',
-    'Applied At': app.applied_at ? new Date(app.applied_at).toLocaleDateString('id-ID') : '',
+    'Applied At': app.created_at ? new Date(app.created_at).toLocaleDateString('id-ID') : '',
   }));
 
   const csv = Papa.unparse(rows);

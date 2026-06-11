@@ -19,11 +19,13 @@ export default function CandidateApplications() {
     if (!user) return;
     (async () => {
       try {
+        const { data: cand } = await supabase.from('candidates').select('id').eq('user_id', user.id).single();
+        if (!cand) { setLoading(false); return; }
         const { data } = await supabase
           .from('applications')
-          .select('*')
-          .eq('candidate_id', user.id)
-          .order('applied_at', { ascending: false });
+          .select('*, jobs(title)')
+          .eq('candidate_id', cand.id)
+          .order('created_at', { ascending: false });
         setApplications(data ?? []);
       } finally {
         setLoading(false);
@@ -74,7 +76,7 @@ export default function CandidateApplications() {
                     {applications.map((app) => (
                       <tr key={app.id} className="hover:bg-sag-mist/50 transition">
                         <td className="table-cell">
-                          <p className="font-semibold text-sag-green">{app.job_title}</p>
+                          <p className="font-semibold text-sag-green">{(app as any).jobs?.title ?? app.job_slug ?? '—'}</p>
                           {app.job_slug && (
                             <Link to={`/jobs/${app.job_slug}`} className="text-xs text-slate-400 hover:underline">
                               Lihat lowongan
@@ -83,7 +85,7 @@ export default function CandidateApplications() {
                         </td>
                         <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
                         <td className="table-cell text-slate-500 whitespace-nowrap">
-                          {new Date(app.applied_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {new Date(app.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </td>
                         <td className="table-cell text-slate-600">{app.expected_salary ?? '-'}</td>
                         <td className="table-cell text-slate-600">{app.availability ?? '-'}</td>

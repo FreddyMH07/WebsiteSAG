@@ -18,13 +18,18 @@ export default function CandidateDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      supabase.from('candidates').select('*').eq('user_id', user.id).single(),
-      supabase.from('applications').select('*').eq('candidate_id', user.id).order('applied_at', { ascending: false }),
-    ]).then(([{ data: cand }, { data: apps }]) => {
+    (async () => {
+      const { data: cand } = await supabase.from('candidates').select('*').eq('user_id', user.id).single();
       setCandidate(cand ?? null);
-      setApplications(apps ?? []);
-    }).finally(() => setLoading(false));
+      if (cand?.id) {
+        const { data: apps } = await supabase
+          .from('applications').select('*, jobs(title)')
+          .eq('candidate_id', cand.id)
+          .order('created_at', { ascending: false });
+        setApplications(apps ?? []);
+      }
+      setLoading(false);
+    })();
   }, [user]);
 
   if (loading) return (
@@ -73,7 +78,7 @@ export default function CandidateDashboard() {
                 </div>
                 <div>
                   <p className="text-2xl font-black text-slate-800">
-                    {applications.filter((a) => ['interview', 'offering', 'accepted'].includes(a.status)).length}
+                    {applications.filter((a) => ['Interview HR', 'Interview User', 'Offering', 'Accepted'].includes(a.status)).length}
                   </p>
                   <p className="text-xs text-slate-500">Active / Interview</p>
                 </div>
@@ -119,9 +124,9 @@ export default function CandidateDashboard() {
                   <tbody>
                     {applications.map((app) => (
                       <tr key={app.id} className="hover:bg-sag-mist/50 transition">
-                        <td className="table-cell font-semibold text-sag-green">{app.job_title}</td>
+                        <td className="table-cell font-semibold text-sag-green">{(app as any).jobs?.title ?? app.job_slug ?? '—'}</td>
                         <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
-                        <td className="table-cell text-slate-500">{new Date(app.applied_at).toLocaleDateString('id-ID')}</td>
+                        <td className="table-cell text-slate-500">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                         <td className="table-cell text-slate-600">{app.expected_salary ?? '-'}</td>
                       </tr>
                     ))}

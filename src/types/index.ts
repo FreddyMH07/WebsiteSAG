@@ -39,28 +39,30 @@ export interface Candidate {
 // ─── Application ──────────────────────────────────────────────────────────────
 
 export type ApplicationStatus =
-  | 'submitted'
-  | 'screening'
-  | 'interview'
-  | 'offering'
-  | 'accepted'
-  | 'rejected';
+  | 'Applied'
+  | 'Screening HR'
+  | 'Psikotes'
+  | 'Interview HR'
+  | 'Interview User'
+  | 'Offering'
+  | 'Accepted'
+  | 'Rejected'
+  | 'Talent Pool';
 
 export interface Application {
   id: string;
   candidate_id: string;
   job_id: string | null;
   job_slug: string | null;
-  job_title: string;
   status: ApplicationStatus;
   expected_salary: string | null;
   availability: string | null;
   cover_note: string | null;
-  applied_at: string;
+  created_at: string;
   updated_at: string | null;
 }
 
-// Application joined with candidate data (for admin views)
+// Application joined with candidate + job data (for admin views)
 export interface ApplicationRow extends Application {
   candidates?: Pick<
     Candidate,
@@ -74,6 +76,7 @@ export interface ApplicationRow extends Application {
     | 'current_company'
     | 'cv_url'
   >;
+  jobs?: Pick<Job, 'title' | 'department' | 'location'> | null;
 }
 
 // ─── Application Note ─────────────────────────────────────────────────────────
