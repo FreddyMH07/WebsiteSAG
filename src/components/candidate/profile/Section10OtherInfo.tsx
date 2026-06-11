@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import SectionSaveBar from './SectionSaveBar';
@@ -40,19 +40,36 @@ const schema = z.object({
 });
 type F = z.infer<typeof schema>;
 
-interface Props { profile: CandidateProfile | null; onSave: (p: CandidateProfilePatch) => Promise<void> }
+// ─── Sub-components defined OUTSIDE so React doesn't remount on re-render ─────
 
-function Radio({ label, name, value, register: reg }: { label: string; name: string; value: string; register: UseFormRegister<F> }) {
+function QuestionBox({ q, children }: { q: string; children: React.ReactNode }) {
   return (
-    <label className="flex cursor-pointer items-center gap-1.5 text-sm">
-      <input type="radio" {...reg(name as keyof F)} value={value} className="accent-sag-green" />
-      {label}
-    </label>
+    <div className="rounded-2xl border border-slate-100 bg-sag-mist/30 p-4">
+      <p className="mb-3 text-sm font-semibold text-slate-700">{q}</p>
+      {children}
+    </div>
   );
 }
 
+function YesNoRadio({ name, reg }: { name: keyof F; reg: UseFormRegister<F> }) {
+  return (
+    <div className="flex gap-4">
+      <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+        <input type="radio" {...reg(name)} value="YA" className="accent-sag-green" /> YA
+      </label>
+      <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+        <input type="radio" {...reg(name)} value="TIDAK" className="accent-sag-green" /> TIDAK
+      </label>
+    </div>
+  );
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
+
+interface Props { profile: CandidateProfile | null; onSave: (p: CandidateProfilePatch) => Promise<void> }
+
 export default function Section10OtherInfo({ profile, onSave }: Props) {
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<F>({
+  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm<F>({
     resolver: zodResolver(schema),
   });
 
@@ -61,30 +78,27 @@ export default function Section10OtherInfo({ profile, onSave }: Props) {
     reset({ ...o } as F);
   }, [profile, reset]);
 
-  const w = watch();
+  // Watch only the fields used for conditional rendering
+  const [
+    can_contact_references, worked_here_before, has_family_here,
+    has_medical_history, spouse_medical_history, has_physical_issues,
+    has_legal_issues, willing_transfer, willing_travel,
+  ] = useWatch({
+    control,
+    name: [
+      'can_contact_references', 'worked_here_before', 'has_family_here',
+      'has_medical_history', 'spouse_medical_history', 'has_physical_issues',
+      'has_legal_issues', 'willing_transfer', 'willing_travel',
+    ],
+  });
+
   const onSubmit = async (data: F) => { await onSave({ other_info: data as Partial<OtherInfo> }); };
-
-  const Q = ({ q, children }: { q: string; children: React.ReactNode }) => (
-    <div className="rounded-2xl border border-slate-100 bg-sag-mist/30 p-4">
-      <p className="mb-3 text-sm font-semibold text-slate-700">{q}</p>
-      {children}
-    </div>
-  );
-
-  const YesNo = ({ name }: { name: string }) => (
-    <div className="flex gap-4">
-      <Radio label="YA" name={name} value="YA" register={register} />
-      <Radio label="TIDAK" name={name} value="TIDAK" register={register} />
-    </div>
-  );
-
-  const Cond = ({ show, name, placeholder }: { show: boolean; name: string; placeholder?: string }) =>
-    show ? <textarea {...register(name as keyof F)} className="input mt-2 h-20 resize-none text-sm" placeholder={placeholder} /> : null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <h2 className="mb-5 text-lg font-black text-sag-green">10. Informasi Lainnya</h2>
 
+      {/* Emergency contact */}
       <div className="mb-6 rounded-2xl border border-sag-green/20 bg-sag-mist p-5">
         <h3 className="mb-4 font-bold text-sag-green">Kontak Darurat</h3>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -111,76 +125,113 @@ export default function Section10OtherInfo({ profile, onSave }: Props) {
       </div>
 
       <div className="space-y-4">
-        <Q q="1. Dapatkah kami menghubungi referensi Anda untuk memperoleh informasi lengkap mengenai diri Anda?">
-          <YesNo name="can_contact_references" />
-          <Cond show={w.can_contact_references === 'TIDAK'} name="can_contact_reason" placeholder="Alasan..." />
-        </Q>
-        <Q q="2. Apakah Anda pernah bekerja pada perusahaan/grup kami sebelumnya?">
-          <YesNo name="worked_here_before" />
-          <Cond show={w.worked_here_before === 'YA'} name="worked_here_details" placeholder="Kapan, sebagai apa, dan nama perusahaan?" />
-        </Q>
-        <Q q="3. Mengapa Anda memutuskan untuk resign / berniat mengajukan resign dari tempat Anda bekerja sekarang?">
+        <QuestionBox q="1. Dapatkah kami menghubungi referensi Anda untuk memperoleh informasi lengkap mengenai diri Anda?">
+          <YesNoRadio name="can_contact_references" reg={register} />
+          {can_contact_references === 'TIDAK' && (
+            <textarea {...register('can_contact_reason')} className="input mt-2 h-20 resize-none text-sm" placeholder="Alasan..." />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="2. Apakah Anda pernah bekerja pada perusahaan/grup kami sebelumnya?">
+          <YesNoRadio name="worked_here_before" reg={register} />
+          {worked_here_before === 'YA' && (
+            <textarea {...register('worked_here_details')} className="input mt-2 h-20 resize-none text-sm" placeholder="Kapan, sebagai apa, dan nama perusahaan?" />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="3. Mengapa Anda memutuskan untuk resign / berniat mengajukan resign dari tempat Anda bekerja sekarang?">
           <textarea {...register('reason_resign')} className="input h-20 resize-none text-sm" />
-        </Q>
-        <Q q="4. Apa kekurangan dari tempat Anda bekerja sekarang / sebelumnya?">
+        </QuestionBox>
+
+        <QuestionBox q="4. Apa kekurangan dari tempat Anda bekerja sekarang / sebelumnya?">
           <textarea {...register('company_weakness')} className="input h-20 resize-none text-sm" />
-        </Q>
-        <Q q="5. Mengapa Anda ingin bergabung dengan perusahaan kami? *">
+        </QuestionBox>
+
+        <QuestionBox q="5. Mengapa Anda ingin bergabung dengan perusahaan kami? *">
           <textarea {...register('why_join')} className="input h-20 resize-none text-sm" />
           {errors.why_join && <p className="mt-1 text-xs text-red-500">{errors.why_join.message}</p>}
-        </Q>
-        <Q q="6. Apakah Anda memiliki keluarga/kenalan yang bekerja pada perusahaan/grup kami?">
-          <YesNo name="has_family_here" />
-          <Cond show={w.has_family_here === 'YA'} name="has_family_details" placeholder="Siapa, sebagai apa, di perusahaan mana?" />
-        </Q>
-        <Q q="7. Sebutkan kelebihan dan kelemahan diri Anda (masing-masing 3)">
+        </QuestionBox>
+
+        <QuestionBox q="6. Apakah Anda memiliki keluarga/kenalan yang bekerja pada perusahaan/grup kami?">
+          <YesNoRadio name="has_family_here" reg={register} />
+          {has_family_here === 'YA' && (
+            <textarea {...register('has_family_details')} className="input mt-2 h-20 resize-none text-sm" placeholder="Siapa, sebagai apa, di perusahaan mana?" />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="7. Sebutkan kelebihan dan kelemahan diri Anda (masing-masing 3)">
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <p className="mb-1 text-xs font-semibold text-green-700">Kelebihan</p>
-              {[1,2,3].map((n) => <input key={n} {...register(`strength_${n}` as keyof F)} className="input mb-2 text-sm" placeholder={`Kelebihan ${n}`} />)}
+              <input {...register('strength_1')} className="input mb-2 text-sm" placeholder="Kelebihan 1" />
+              <input {...register('strength_2')} className="input mb-2 text-sm" placeholder="Kelebihan 2" />
+              <input {...register('strength_3')} className="input text-sm" placeholder="Kelebihan 3" />
             </div>
             <div>
               <p className="mb-1 text-xs font-semibold text-red-700">Kelemahan</p>
-              {[1,2,3].map((n) => <input key={n} {...register(`weakness_${n}` as keyof F)} className="input mb-2 text-sm" placeholder={`Kelemahan ${n}`} />)}
+              <input {...register('weakness_1')} className="input mb-2 text-sm" placeholder="Kelemahan 1" />
+              <input {...register('weakness_2')} className="input mb-2 text-sm" placeholder="Kelemahan 2" />
+              <input {...register('weakness_3')} className="input text-sm" placeholder="Kelemahan 3" />
             </div>
           </div>
-        </Q>
-        <Q q="8. Apakah Anda termasuk tulang punggung keluarga?">
-          <YesNo name="is_breadwinner" />
-        </Q>
-        <Q q="9. Apa hobi Anda?">
+        </QuestionBox>
+
+        <QuestionBox q="8. Apakah Anda termasuk tulang punggung keluarga?">
+          <YesNoRadio name="is_breadwinner" reg={register} />
+        </QuestionBox>
+
+        <QuestionBox q="9. Apa hobi Anda?">
           <input {...register('hobby')} className="input text-sm" />
-        </Q>
-        <Q q="10. ⚠ Apakah Anda pernah menderita sakit jantung, kanker, HIV/AIDS, ginjal, penyakit atau kecelakaan lainnya?">
-          <YesNo name="has_medical_history" />
-          <Cond show={w.has_medical_history === 'YA'} name="medical_history_details" placeholder="Kapan dan apa penyakit/kecelakaannya?" />
-        </Q>
-        <Q q="11. ⚠ Apakah ada istri/anak Anda yang menderita sakit jantung, kanker, HIV/AIDS, ginjal, penyakit atau kecelakaan lainnya?">
-          <YesNo name="spouse_medical_history" />
-          <Cond show={w.spouse_medical_history === 'YA'} name="spouse_medical_details" placeholder="Siapa? Kapan dialami?" />
-        </Q>
-        <Q q="12. ⚠ Apakah Anda mempunyai masalah dengan tubuh Anda, seperti penglihatan, pendengaran, berbicara, buta warna, dll.?">
-          <YesNo name="has_physical_issues" />
-          <Cond show={w.has_physical_issues === 'YA'} name="physical_issues_details" placeholder="Keterangan..." />
-        </Q>
-        <Q q="13. ⚠ Apakah Anda pernah bermasalah dengan pihak yang berwajib?">
-          <YesNo name="has_legal_issues" />
-          <Cond show={w.has_legal_issues === 'YA'} name="legal_issues_details" placeholder="Kapan dan kasus apa?" />
-        </Q>
-        <Q q="14. Bersediakah Anda dimutasikan ke cabang lain atau perusahaan lain dalam grup kami?">
-          <YesNo name="willing_transfer" />
-          <Cond show={w.willing_transfer === 'TIDAK'} name="not_willing_transfer_reason" placeholder="Jika Tidak, kenapa?" />
-        </Q>
-        <Q q="15. Jika suatu saat Anda menolak dimutasi, apa sanksinya bagi Anda?">
+        </QuestionBox>
+
+        <QuestionBox q="10. ⚠ Apakah Anda pernah menderita sakit jantung, kanker, HIV/AIDS, ginjal, penyakit atau kecelakaan lainnya?">
+          <YesNoRadio name="has_medical_history" reg={register} />
+          {has_medical_history === 'YA' && (
+            <textarea {...register('medical_history_details')} className="input mt-2 h-20 resize-none text-sm" placeholder="Kapan dan apa penyakit/kecelakaannya?" />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="11. ⚠ Apakah ada istri/anak Anda yang menderita sakit jantung, kanker, HIV/AIDS, ginjal, penyakit atau kecelakaan lainnya?">
+          <YesNoRadio name="spouse_medical_history" reg={register} />
+          {spouse_medical_history === 'YA' && (
+            <textarea {...register('spouse_medical_details')} className="input mt-2 h-20 resize-none text-sm" placeholder="Siapa? Kapan dialami?" />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="12. ⚠ Apakah Anda mempunyai masalah dengan tubuh Anda, seperti penglihatan, pendengaran, berbicara, buta warna, dll.?">
+          <YesNoRadio name="has_physical_issues" reg={register} />
+          {has_physical_issues === 'YA' && (
+            <textarea {...register('physical_issues_details')} className="input mt-2 h-20 resize-none text-sm" placeholder="Keterangan..." />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="13. ⚠ Apakah Anda pernah bermasalah dengan pihak yang berwajib?">
+          <YesNoRadio name="has_legal_issues" reg={register} />
+          {has_legal_issues === 'YA' && (
+            <textarea {...register('legal_issues_details')} className="input mt-2 h-20 resize-none text-sm" placeholder="Kapan dan kasus apa?" />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="14. Bersediakah Anda dimutasikan ke cabang lain atau perusahaan lain dalam grup kami?">
+          <YesNoRadio name="willing_transfer" reg={register} />
+          {willing_transfer === 'TIDAK' && (
+            <textarea {...register('not_willing_transfer_reason')} className="input mt-2 h-16 resize-none text-sm" placeholder="Jika Tidak, kenapa?" />
+          )}
+        </QuestionBox>
+
+        <QuestionBox q="15. Jika suatu saat Anda menolak dimutasi, apa sanksinya bagi Anda?">
           <textarea {...register('transfer_refusal_consequence')} className="input h-16 resize-none text-sm" />
-        </Q>
-        <Q q="16. Bersediakah Anda melakukan perjalanan dinas ke luar kota untuk waktu tertentu?">
-          <YesNo name="willing_travel" />
-          <Cond show={w.willing_travel === 'TIDAK'} name="not_willing_travel_reason" placeholder="Jika Tidak, kenapa?" />
-        </Q>
+        </QuestionBox>
+
+        <QuestionBox q="16. Bersediakah Anda melakukan perjalanan dinas ke luar kota untuk waktu tertentu?">
+          <YesNoRadio name="willing_travel" reg={register} />
+          {willing_travel === 'TIDAK' && (
+            <textarea {...register('not_willing_travel_reason')} className="input mt-2 h-16 resize-none text-sm" placeholder="Jika Tidak, kenapa?" />
+          )}
+        </QuestionBox>
       </div>
 
-      <p className="mt-4 text-xs text-slate-400">⚠ Data kesehatan (pertanyaan 10-12) adalah data pribadi spesifik yang dilindungi UU No. 27/2022 tentang PDP. Data ini hanya diproses untuk keperluan rekrutmen.</p>
+      <p className="mt-4 text-xs text-slate-400">⚠ Data kesehatan (pertanyaan 10-12) adalah data pribadi spesifik yang dilindungi UU No. 27/2022 tentang PDP.</p>
       <SectionSaveBar isSubmitting={isSubmitting} />
     </form>
   );
