@@ -6,6 +6,7 @@ import Footer from '@/components/common/Footer';
 import Spinner from '@/components/common/Spinner';
 import SEO from '@/components/common/SEO';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { getJobBySlug } from '@/lib/jobs';
 import type { ContentfulJob } from '@/types';
 
@@ -40,10 +41,11 @@ function buildJobPosting(job: ContentfulJob) {
 
 export default function JobDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [job, setJob] = useState<ContentfulJob | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastApplication, setLastApplication] = useState<{ job_title: string | null; created_at: string } | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -52,6 +54,24 @@ export default function JobDetail() {
       .catch(() => setJob(null))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Fetch candidate's most recent application in last 12 months (group-wide block check)
+  useEffect(() => {
+    if (!user || profile?.role !== 'candidate') return;
+    (async () => {
+      const { data: cand } = await supabase.from('candidates').select('id').eq('user_id', user.id).maybeSingle();
+      if (!cand?.id) return;
+      const { data } = await supabase
+        .from('applications')
+        .select('job_title, created_at')
+        .eq('candidate_id', cand.id)
+        .gt('created_at', new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLastApplication(data ?? null);
+    })();
+  }, [user, profile]);
 
   if (loading) return (
     <><Navbar /><div className="flex min-h-[60vh] items-center justify-center"><Spinner size="lg" /></div><Footer /></>
@@ -180,11 +200,31 @@ export default function JobDetail() {
                 )}
               </dl>
 
-              {job.isOpen && (
+              {job.isOpen && lastApplication ? (
+                (() => {
+                  const appliedDate = new Date(lastApplication.created_at);
+                  const canReapplyDate = new Date(appliedDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+                  const fmt = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                  return (
+                    <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                      <p className="font-semibold">Tidak dapat melamar</p>
+                      <p className="mt-1">
+                        Anda sudah melamar{' '}
+                        <strong>{lastApplication.job_title ?? 'posisi lain'}</strong>{' '}
+                        pada <strong>{fmt(appliedDate)}</strong>.
+                      </p>
+                      <p className="mt-1">
+                        Dapat melamar kembali:{' '}
+                        <strong>{fmt(canReapplyDate)}</strong>.
+                      </p>
+                    </div>
+                  );
+                })()
+              ) : job.isOpen ? (
                 <button onClick={handleApply} className="btn-primary mt-6 w-full">
                   Apply Sekarang
                 </button>
-              )}
+              ) : null}
 
               {!profile && job.isOpen && (
                 <p className="mt-3 text-center text-xs text-slate-500">

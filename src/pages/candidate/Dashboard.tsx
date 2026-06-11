@@ -38,6 +38,11 @@ export default function CandidateDashboard() {
 
   const profileComplete = candidate?.cv_url && candidate?.domicile && candidate?.education;
 
+  const twelveMonthsAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+  const blockingApp = applications.length > 0 && new Date(applications[0].created_at) > twelveMonthsAgo
+    ? applications[0]
+    : null;
+
   return (
     <>
       <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
@@ -48,6 +53,25 @@ export default function CandidateDashboard() {
             <p className="font-bold uppercase tracking-widest text-sag-gold text-sm">Candidate Portal</p>
             <h1 className="mt-2 text-3xl font-black text-sag-green">Welcome, {profile?.full_name?.split(' ')[0]}!</h1>
           </div>
+
+          {/* Group-wide 12-month application block banner */}
+          {blockingApp && (() => {
+            const appliedDate = new Date(blockingApp.created_at);
+            const canReapplyDate = new Date(appliedDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+            const fmt = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            return (
+              <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                <p className="font-semibold text-amber-800">Tidak dapat melamar saat ini</p>
+                <p className="mt-1 text-sm text-amber-700">
+                  Anda sudah melamar posisi{' '}
+                  <strong>{blockingApp.job_title ?? blockingApp.job_slug ?? 'lowongan'}</strong>{' '}
+                  pada <strong>{fmt(appliedDate)}</strong>.
+                  Anda dapat melamar kembali setelah{' '}
+                  <strong>{fmt(canReapplyDate)}</strong>.
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Profile completion alert */}
           {!profileComplete && (

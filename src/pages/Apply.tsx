@@ -33,6 +33,7 @@ export default function Apply() {
   const [profileComplete, setProfileComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [lastApplication, setLastApplication] = useState<{ job_title: string | null; job_slug: string | null; created_at: string } | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -57,11 +58,19 @@ export default function Apply() {
       const { data: cand } = await supabase.from('candidates').select('*').eq('user_id', user.id).single();
       setCandidate(cand ?? null);
       if (cand?.id) {
-        const [{ data: existing }, { data: cp }] = await Promise.all([
+        const twelveMonthsAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+        const [{ data: existing }, { data: cp }, { data: lastApp }] = await Promise.all([
           supabase.from('applications').select('id').eq('candidate_id', cand.id).eq('job_slug', slug).maybeSingle(),
           supabase.from('candidate_profiles').select('birth_date,gender,marital_status,nik,address_current,consent_data_truth,consent_pdp,declared_name').eq('candidate_id', cand.id).maybeSingle(),
+          supabase.from('applications').select('job_title, job_slug, created_at')
+            .eq('candidate_id', cand.id)
+            .gt('created_at', twelveMonthsAgo)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
         setAlreadyApplied(!!existing);
+        setLastApplication(lastApp ?? null);
         const c = cp as any;
         setProfileComplete(!!(c?.birth_date && c?.gender && c?.marital_status && c?.nik && c?.address_current && c?.consent_data_truth && c?.consent_pdp && c?.declared_name));
       }
@@ -199,6 +208,38 @@ export default function Apply() {
       <Footer />
     </>
   );
+
+  // Group-wide 12-month block (applied a DIFFERENT position in the last 12 months)
+  if (lastApplication && lastApplication.job_slug !== slug) {
+    const appliedDate = new Date(lastApplication.created_at);
+    const canReapplyDate = new Date(appliedDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const fmtDate = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    return (
+      <>
+        <Navbar />
+        <section className="section-pad">
+          <div className="container-page max-w-md text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Tidak Dapat Melamar</p>
+            <h1 className="mt-2 text-2xl font-black text-sag-green">Satu Lamaran per Tahun</h1>
+            <p className="mt-4 text-slate-500">
+              Anda sudah melamar posisi{' '}
+              <strong>{lastApplication.job_title ?? lastApplication.job_slug ?? 'lain'}</strong>{' '}
+              pada <strong>{fmtDate(appliedDate)}</strong>.
+            </p>
+            <p className="mt-2 text-slate-500">
+              Anda dapat melamar kembali setelah{' '}
+              <strong className="text-sag-green">{fmtDate(canReapplyDate)}</strong>.
+            </p>
+            <div className="mt-8 grid gap-3">
+              <Link to="/candidate/dashboard" className="btn-primary">Lihat Lamaran Saya</Link>
+              <Link to="/jobs" className="btn-secondary">Lihat Lowongan Lain</Link>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </>
+    );
+  }
 
   // Profile not complete — gate before the form
   if (!profileComplete) return (
