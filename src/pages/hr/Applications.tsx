@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Search, Filter, Download } from 'lucide-react';
 import HRLayout from '@/components/hr/HRLayout';
@@ -10,6 +10,8 @@ import { careerDepartments } from '@/data/siteContent';
 import type { ApplicationRow, ApplicationStatus } from '@/types';
 
 const STATUS_OPTIONS: ApplicationStatus[] = ['Applied', 'Screening HR', 'Psikotes', 'Interview HR', 'Interview User', 'Offering', 'Accepted', 'Rejected', 'Talent Pool'];
+const IN_PROGRESS_STATUSES = ['Screening HR', 'Psikotes', 'Interview HR', 'Interview User', 'Offering'];
+const IN_PROGRESS_PARAM = 'in_progress';
 
 function downloadCSV(rows: ApplicationRow[]) {
   const headers = ['Name', 'Email', 'Phone', 'Position', 'Status', 'Applied', 'Expected Salary', 'Availability'];
@@ -34,13 +36,24 @@ function downloadCSV(rows: ApplicationRow[]) {
 }
 
 export default function HRApplications() {
+  const [searchParams] = useSearchParams();
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [jobSlugFilter, setJobSlugFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Initialize filters from URL query params on first mount
+  useEffect(() => {
+    const sp = searchParams.get('status');
+    const jp = searchParams.get('job');
+    if (sp) setStatusFilter(sp === 'submitted' ? 'Applied' : sp);
+    if (jp) setJobSlugFilter(jp);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -62,16 +75,22 @@ export default function HRApplications() {
     const q = search.toLowerCase();
     const jobTitle = (app.job_title ?? app.job_slug ?? '').toLowerCase();
     const matchSearch = !q || name.includes(q) || email.includes(q) || jobTitle.includes(q);
-    const matchStatus = !statusFilter || app.status === statusFilter;
+    let matchStatus = true;
+    if (statusFilter === IN_PROGRESS_PARAM) {
+      matchStatus = IN_PROGRESS_STATUSES.includes(app.status);
+    } else if (statusFilter) {
+      matchStatus = app.status === statusFilter;
+    }
+    const matchJob = !jobSlugFilter || app.job_slug === jobSlugFilter;
     const matchDept = !deptFilter || jobTitle.includes(deptFilter.toLowerCase());
     const appliedDate = new Date(app.created_at).toISOString().split('T')[0];
     const matchFrom = !dateFrom || appliedDate >= dateFrom;
     const matchTo = !dateTo || appliedDate <= dateTo;
-    return matchSearch && matchStatus && matchDept && matchFrom && matchTo;
+    return matchSearch && matchStatus && matchJob && matchDept && matchFrom && matchTo;
   });
 
-  const clearFilters = () => { setSearch(''); setStatusFilter(''); setDeptFilter(''); setDateFrom(''); setDateTo(''); };
-  const hasFilters = search || statusFilter || deptFilter || dateFrom || dateTo;
+  const clearFilters = () => { setSearch(''); setStatusFilter(''); setJobSlugFilter(''); setDeptFilter(''); setDateFrom(''); setDateTo(''); };
+  const hasFilters = search || statusFilter || jobSlugFilter || deptFilter || dateFrom || dateTo;
 
   return (
     <>
@@ -95,7 +114,8 @@ export default function HRApplications() {
           </div>
           <select className="input w-auto min-w-[130px] text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">All Status</option>
-            {STATUS_OPTIONS.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+            <option value={IN_PROGRESS_PARAM}>In Progress (All)</option>
+            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <select className="input w-auto min-w-[150px] text-sm" value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
             <option value="">All Departments</option>
@@ -103,6 +123,12 @@ export default function HRApplications() {
           </select>
           <input type="date" className="input w-auto text-sm" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
           <input type="date" className="input w-auto text-sm" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="To date" />
+          {jobSlugFilter && (
+            <div className="flex items-center gap-1 rounded-xl bg-sag-mist px-3 py-1.5 text-sm font-semibold text-sag-green">
+              Job: {jobSlugFilter}
+              <button onClick={() => setJobSlugFilter('')} className="ml-1 text-slate-400 hover:text-red-500">×</button>
+            </div>
+          )}
           {hasFilters && (
             <button onClick={clearFilters} className="btn-secondary flex items-center gap-1 text-sm">
               <Filter className="h-3.5 w-3.5" /> Clear
