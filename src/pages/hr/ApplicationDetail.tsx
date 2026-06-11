@@ -97,8 +97,18 @@ export default function HRApplicationDetail() {
     <HRLayout>
       {/* Print header — only visible when printing */}
       <div className="hidden print:block print:mb-6">
-        <p className="text-lg font-black text-sag-green">PT Sahabat Agro Group — Formulir Lamaran Kerja</p>
-        <p className="text-sm text-slate-500">Dicetak: {new Date().toLocaleDateString('id-ID')}</p>
+        <div className="flex items-center gap-4 border-b-2 border-sag-green pb-4">
+          <img
+            src="/assets/sag/brand/logo-ptsag.png"
+            alt="PT Sahabat Agro Group"
+            className="h-16 w-auto"
+          />
+          <div>
+            <p className="text-xl font-black text-sag-green">PT SAHABAT AGRO GROUP</p>
+            <p className="text-sm font-bold text-slate-700">EMPLOYMENT APPLICATION FORM — Formulir Lamaran Kerja</p>
+            <p className="text-xs text-slate-500">Dicetak: {new Date().toLocaleDateString('id-ID')}</p>
+          </div>
+        </div>
       </div>
 
       <div className="mb-6 print:hidden">
