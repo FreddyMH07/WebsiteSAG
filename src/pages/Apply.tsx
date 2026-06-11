@@ -260,10 +260,18 @@ export default function Apply() {
                   </p>
                 )}
                 <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
-                  onChange={(e) => setCvFile(e.target.files?.[0] ?? null)} />
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && file.size > 2 * 1024 * 1024) {
+                      toast('Ukuran CV maksimal 2MB.', 'error');
+                      e.target.value = '';
+                      return;
+                    }
+                    setCvFile(file ?? null);
+                  }} />
                 <button type="button" onClick={() => fileRef.current?.click()} className="btn-secondary">
                   <Upload className="mr-2 h-4 w-4" />
-                  {cvFile ? cvFile.name : `${candidate?.cv_url ? 'Ganti' : 'Upload'} CV (PDF/DOC, max 10MB)`}
+                  {cvFile ? cvFile.name : `${candidate?.cv_url ? 'Ganti' : 'Upload'} CV (PDF/DOC, maks 2MB)`}
                 </button>
               </div>
 

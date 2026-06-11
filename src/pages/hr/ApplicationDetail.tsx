@@ -122,16 +122,20 @@ export default function HRApplicationDetail() {
                 </div>
               ))}
             </div>
-            {candidate?.linkedin_url && (
-              <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
-                LinkedIn <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-            {candidate?.cv_url && (
-              <a href={candidate.cv_url} target="_blank" rel="noopener noreferrer" className="ml-4 mt-4 inline-flex items-center gap-1 text-sm text-sag-leaf hover:underline">
-                View CV <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
+            <div className="mt-4 flex flex-wrap gap-4">
+              {candidate?.linkedin_url && (
+                <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                  LinkedIn <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+              {candidate?.cv_url ? (
+                <a href={candidate.cv_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-bold text-sag-leaf hover:underline">
+                  View CV / Resume <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                <span className="text-sm text-slate-400">CV belum diupload</span>
+              )}
+            </div>
           </div>
 
           {/* Application details */}
