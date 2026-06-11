@@ -77,7 +77,6 @@ export interface ApplicationRow extends Application {
     | 'current_company'
     | 'cv_url'
   >;
-  jobs?: Pick<Job, 'title' | 'department' | 'location'> | null;
 }
 
 // ─── Application Note ─────────────────────────────────────────────────────────

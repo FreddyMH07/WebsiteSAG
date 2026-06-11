@@ -11,7 +11,7 @@ export function exportApplicationsToCSV(applications: ApplicationRow[]) {
     Major: app.candidates?.major ?? '',
     'Experience (years)': app.candidates?.experience_year ?? '',
     'Current Company': app.candidates?.current_company ?? '',
-    'Job Title': app.jobs?.title ?? app.job_slug ?? '',
+    'Job Title': app.job_title ?? app.job_slug ?? '',
     Status: app.status ?? '',
     'Expected Salary': app.expected_salary ?? '',
     Availability: app.availability ?? '',

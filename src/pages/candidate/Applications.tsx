@@ -23,7 +23,7 @@ export default function CandidateApplications() {
         if (!cand) { setLoading(false); return; }
         const { data } = await supabase
           .from('applications')
-          .select('*, jobs(title)')
+          .select('*')
           .eq('candidate_id', cand.id)
           .order('created_at', { ascending: false });
         setApplications(data ?? []);
@@ -76,7 +76,7 @@ export default function CandidateApplications() {
                     {applications.map((app) => (
                       <tr key={app.id} className="hover:bg-sag-mist/50 transition">
                         <td className="table-cell">
-                          <p className="font-semibold text-sag-green">{(app as any).jobs?.title ?? app.job_slug ?? '—'}</p>
+                          <p className="font-semibold text-sag-green">{app.job_title ?? app.job_slug ?? '—'}</p>
                           {app.job_slug && (
                             <Link to={`/jobs/${app.job_slug}`} className="text-xs text-slate-400 hover:underline">
                               Lihat lowongan

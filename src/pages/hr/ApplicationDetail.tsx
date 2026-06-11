@@ -38,7 +38,7 @@ export default function HRApplicationDetail() {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      supabase.from('applications').select('*, candidates(*), jobs(title, department, location)').eq('id', id).single(),
+      supabase.from('applications').select('*, candidates(*)').eq('id', id).single(),
       supabase.from('application_notes').select('*').eq('application_id', id).order('created_at', { ascending: true }),
     ]).then(([{ data: appData }, { data: noteData }]) => {
       if (appData) {
@@ -89,7 +89,7 @@ export default function HRApplicationDetail() {
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-sag-green">{app.job_title ?? (app as any).jobs?.title ?? app.job_slug ?? '—'}</h1>
+            <h1 className="text-2xl font-black text-sag-green">{app.job_title ?? app.job_slug ?? '—'}</h1>
             <p className="mt-1 text-sm text-slate-500">
               Application ID: {app.id} · Applied {new Date(app.created_at).toLocaleDateString('id-ID')}
             </p>

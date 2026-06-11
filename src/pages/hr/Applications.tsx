@@ -17,7 +17,7 @@ function downloadCSV(rows: ApplicationRow[]) {
     r.candidates?.full_name ?? '',
     r.candidates?.email ?? '',
     r.candidates?.phone ?? '',
-    r.job_title ?? r.jobs?.title ?? r.job_slug ?? '',
+    r.job_title ?? r.job_slug ?? '',
     r.status,
     new Date(r.created_at).toLocaleDateString('id-ID'),
     r.expected_salary ?? '',
@@ -47,7 +47,7 @@ export default function HRApplications() {
       try {
         const { data } = await supabase
           .from('applications')
-          .select('*, candidates(full_name, email, phone, domicile, cv_url), jobs(title, department, location)')
+          .select('*, candidates(full_name, email, phone, domicile, cv_url)')
           .order('created_at', { ascending: false });
         setApplications((data ?? []) as ApplicationRow[]);
       } finally {
@@ -60,7 +60,7 @@ export default function HRApplications() {
     const name = app.candidates?.full_name?.toLowerCase() ?? '';
     const email = app.candidates?.email?.toLowerCase() ?? '';
     const q = search.toLowerCase();
-    const jobTitle = (app.jobs?.title ?? app.job_slug ?? '').toLowerCase();
+    const jobTitle = (app.job_title ?? app.job_slug ?? '').toLowerCase();
     const matchSearch = !q || name.includes(q) || email.includes(q) || jobTitle.includes(q);
     const matchStatus = !statusFilter || app.status === statusFilter;
     const matchDept = !deptFilter || jobTitle.includes(deptFilter.toLowerCase());
@@ -140,7 +140,7 @@ export default function HRApplications() {
                       <p className="text-xs text-slate-400">{app.candidates?.email}</p>
                       <p className="text-xs text-slate-400">{app.candidates?.phone}</p>
                     </td>
-                    <td className="table-cell font-semibold text-sag-green">{app.job_title ?? app.jobs?.title ?? app.job_slug ?? '—'}</td>
+                    <td className="table-cell font-semibold text-sag-green">{app.job_title ?? app.job_slug ?? '—'}</td>
                     <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
                     <td className="table-cell text-slate-500 whitespace-nowrap">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                     <td className="table-cell text-slate-600">{app.expected_salary ?? '—'}</td>

@@ -23,7 +23,7 @@ export default function CandidateDashboard() {
       setCandidate(cand ?? null);
       if (cand?.id) {
         const { data: apps } = await supabase
-          .from('applications').select('*, jobs(title)')
+          .from('applications').select('*')
           .eq('candidate_id', cand.id)
           .order('created_at', { ascending: false });
         setApplications(apps ?? []);
@@ -124,7 +124,7 @@ export default function CandidateDashboard() {
                   <tbody>
                     {applications.map((app) => (
                       <tr key={app.id} className="hover:bg-sag-mist/50 transition">
-                        <td className="table-cell font-semibold text-sag-green">{(app as any).jobs?.title ?? app.job_slug ?? '—'}</td>
+                        <td className="table-cell font-semibold text-sag-green">{app.job_title ?? app.job_slug ?? '—'}</td>
                         <td className="table-cell"><StatusBadge status={app.status as ApplicationStatus} /></td>
                         <td className="table-cell text-slate-500">{new Date(app.created_at).toLocaleDateString('id-ID')}</td>
                         <td className="table-cell text-slate-600">{app.expected_salary ?? '-'}</td>
