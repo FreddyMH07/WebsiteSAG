@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, ExternalLink, Save, Plus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Save, Plus, Printer } from 'lucide-react';
 import HRLayout from '@/components/hr/HRLayout';
 import Spinner from '@/components/common/Spinner';
 import StatusBadge from '@/components/common/StatusBadge';
+import CandidateProfileReadOnly from '@/components/hr/CandidateProfileReadOnly';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
-import type { ApplicationRow, ApplicationNote, ApplicationStatus, Candidate } from '@/types';
+import type { ApplicationRow, ApplicationNote, ApplicationStatus, Candidate, CandidateProfile } from '@/types';
 
 const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
   { value: 'Applied',        label: 'Applied' },
@@ -29,6 +30,7 @@ export default function HRApplicationDetail() {
 
   const [app, setApp] = useState<ApplicationRow | null>(null);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [candProfile, setCandProfile] = useState<CandidateProfile | null>(null);
   const [notes, setNotes] = useState<ApplicationNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState<ApplicationStatus>('Applied');
@@ -40,11 +42,21 @@ export default function HRApplicationDetail() {
     Promise.all([
       supabase.from('applications').select('*, candidates(*)').eq('id', id).single(),
       supabase.from('application_notes').select('*').eq('application_id', id).order('created_at', { ascending: true }),
-    ]).then(([{ data: appData }, { data: noteData }]) => {
+    ]).then(async ([{ data: appData }, { data: noteData }]) => {
       if (appData) {
         setApp(appData as ApplicationRow);
-        setCandidate((appData as any).candidates as Candidate);
+        const cand = (appData as any).candidates as Candidate;
+        setCandidate(cand);
         setNewStatus(appData.status as ApplicationStatus);
+        // Load candidate_profiles using candidate.id
+        if (cand?.id) {
+          const { data: cp } = await supabase
+            .from('candidate_profiles')
+            .select('*')
+            .eq('candidate_id', cand.id)
+            .maybeSingle();
+          setCandProfile((cp as CandidateProfile) ?? null);
+        }
       }
       setNotes((noteData ?? []) as ApplicationNote[]);
     }).finally(() => setLoading(false));
@@ -83,7 +95,13 @@ export default function HRApplicationDetail() {
     <>
     <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
     <HRLayout>
-      <div className="mb-6">
+      {/* Print header — only visible when printing */}
+      <div className="hidden print:block print:mb-6">
+        <p className="text-lg font-black text-sag-green">PT Sahabat Agro Group — Formulir Lamaran Kerja</p>
+        <p className="text-sm text-slate-500">Dicetak: {new Date().toLocaleDateString('id-ID')}</p>
+      </div>
+
+      <div className="mb-6 print:hidden">
         <Link to="/hr/applications" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-sag-green transition mb-4">
           <ArrowLeft className="h-4 w-4" /> Back to Applications
         </Link>
@@ -94,27 +112,41 @@ export default function HRApplicationDetail() {
               Application ID: {app.id} · Applied {new Date(app.created_at).toLocaleDateString('id-ID')}
             </p>
           </div>
-          <StatusBadge status={app.status as ApplicationStatus} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.print()}
+              className="btn-secondary text-sm print:hidden"
+            >
+              <Printer className="mr-2 h-4 w-4" /> Cetak Formulir
+            </button>
+            <StatusBadge status={app.status as ApplicationStatus} />
+          </div>
         </div>
+      </div>
+
+      {/* Print-only title */}
+      <div className="hidden print:block mb-4">
+        <h1 className="text-xl font-black text-sag-green">{app.job_title ?? app.job_slug ?? '—'}</h1>
+        <p className="text-sm text-slate-500">Applied: {new Date(app.created_at).toLocaleDateString('id-ID')}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
           {/* Candidate info */}
           <div className="card p-6">
-            <h2 className="mb-4 font-black text-sag-green">Candidate Information</h2>
+            <h2 className="mb-4 font-black text-sag-green">Informasi Kandidat</h2>
             <div className="grid gap-4 sm:grid-cols-2 text-sm">
               {[
-                ['Name', candidate?.full_name],
+                ['Nama', candidate?.full_name],
                 ['Email', candidate?.email],
-                ['Phone', candidate?.phone],
-                ['Domicile', candidate?.domicile],
-                ['Education', candidate?.education],
-                ['Major', candidate?.major],
-                ['Experience', candidate?.experience_year],
-                ['Current Company', candidate?.current_company],
-                ['Current Position', candidate?.current_position],
-                ['Expected Salary (Profile)', candidate?.expected_salary],
+                ['No. HP', candidate?.phone],
+                ['Domisili', candidate?.domicile],
+                ['Pendidikan', candidate?.education],
+                ['Jurusan', candidate?.major],
+                ['Pengalaman', candidate?.experience_year],
+                ['Perusahaan Terakhir', candidate?.current_company],
+                ['Jabatan Terakhir', candidate?.current_position],
+                ['Ekspektasi Gaji (Profil)', candidate?.expected_salary],
               ].map(([label, value]) => (
                 <div key={label as string}>
                   <p className="text-xs text-slate-500">{label}</p>
@@ -122,7 +154,7 @@ export default function HRApplicationDetail() {
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap gap-4">
+            <div className="mt-4 flex flex-wrap gap-4 print:hidden">
               {candidate?.linkedin_url && (
                 <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
                   LinkedIn <ExternalLink className="h-3.5 w-3.5" />
@@ -130,7 +162,7 @@ export default function HRApplicationDetail() {
               )}
               {candidate?.cv_url ? (
                 <a href={candidate.cv_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-bold text-sag-leaf hover:underline">
-                  View CV / Resume <ExternalLink className="h-3.5 w-3.5" />
+                  Lihat CV / Resume <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ) : (
                 <span className="text-sm text-slate-400">CV belum diupload</span>
@@ -140,30 +172,42 @@ export default function HRApplicationDetail() {
 
           {/* Application details */}
           <div className="card p-6">
-            <h2 className="mb-4 font-black text-sag-green">Application Details</h2>
+            <h2 className="mb-4 font-black text-sag-green">Detail Lamaran</h2>
             <div className="grid gap-4 sm:grid-cols-2 text-sm mb-4">
               <div>
-                <p className="text-xs text-slate-500">Expected Salary (Applied)</p>
+                <p className="text-xs text-slate-500">Ekspektasi Gaji (Lamar)</p>
                 <p className="font-semibold text-slate-800">{app.expected_salary ?? '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500">Availability to Join</p>
+                <p className="text-xs text-slate-500">Ketersediaan Bergabung</p>
                 <p className="font-semibold text-slate-800">{app.availability ?? '—'}</p>
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">Cover Letter / Motivation</p>
+              <p className="text-xs text-slate-500 mb-1">Cover Letter / Motivasi</p>
               <div className="rounded-2xl bg-sag-mist p-4 text-sm text-slate-700 whitespace-pre-line leading-7">
                 {app.cover_note || '—'}
               </div>
             </div>
           </div>
 
-          {/* HR Notes */}
-          <div className="card p-6">
-            <h2 className="mb-4 font-black text-sag-green">HR Notes</h2>
+          {/* Full SAG Employment Application Form */}
+          {candProfile ? (
+            <div className="card p-6">
+              <h2 className="mb-5 font-black text-sag-green">Formulir Data Diri (SAG)</h2>
+              <CandidateProfileReadOnly cp={candProfile} />
+            </div>
+          ) : (
+            <div className="card p-6 print:hidden">
+              <p className="text-sm text-slate-400">Kandidat belum mengisi Formulir Data Diri SAG.</p>
+            </div>
+          )}
+
+          {/* HR Notes — hidden in print */}
+          <div className="card p-6 print:hidden">
+            <h2 className="mb-4 font-black text-sag-green">Catatan HR</h2>
             {notes.length === 0 ? (
-              <p className="text-sm text-slate-400 mb-4">No notes yet.</p>
+              <p className="text-sm text-slate-400 mb-4">Belum ada catatan.</p>
             ) : (
               <div className="space-y-3 mb-4">
                 {notes.map((note) => (
@@ -177,19 +221,19 @@ export default function HRApplicationDetail() {
             <div className="space-y-2">
               <textarea
                 className="input h-24 resize-none text-sm"
-                placeholder="Add a note (interview result, screening observation, etc.)..."
+                placeholder="Tambah catatan (hasil interview, observasi screening, dll.)..."
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
               />
               <button onClick={handleAddNote} disabled={saving || !newNote.trim()} className="btn-primary text-sm">
-                <Plus className="mr-2 h-4 w-4" /> Add Note
+                <Plus className="mr-2 h-4 w-4" /> Tambah Catatan
               </button>
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
+        {/* Sidebar — hidden in print */}
+        <div className="space-y-4 print:hidden">
           <div className="card p-6">
             <h3 className="mb-4 font-black text-sag-green">Update Status</h3>
             <select className="input text-sm" value={newStatus} onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>
@@ -198,7 +242,7 @@ export default function HRApplicationDetail() {
               ))}
             </select>
             <button onClick={handleUpdateStatus} disabled={saving} className="btn-primary mt-3 w-full text-sm">
-              {saving ? <Spinner size="sm" /> : <><Save className="mr-2 h-4 w-4" />Save Status</>}
+              {saving ? <Spinner size="sm" /> : <><Save className="mr-2 h-4 w-4" />Simpan Status</>}
             </button>
           </div>
 
@@ -209,6 +253,10 @@ export default function HRApplicationDetail() {
               <p className="text-xs mt-1">Last Updated: {new Date(app.updated_at).toLocaleDateString('id-ID')}</p>
             )}
           </div>
+
+          <button onClick={() => window.print()} className="btn-secondary w-full text-sm">
+            <Printer className="mr-2 h-4 w-4" /> Cetak Formulir
+          </button>
         </div>
       </div>
     </HRLayout>

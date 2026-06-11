@@ -18,3 +18,12 @@ html { scroll-behavior: smooth; }
 .table-head { @apply bg-sag-green text-left text-xs uppercase tracking-wide text-white; }
 .table-cell { @apply border-b border-slate-100 px-4 py-3 text-sm; }
 .badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold; }
+
+@media print {
+  body { background: white !important; font-size: 11pt; }
+  nav, footer, aside, .print\:hidden { display: none !important; }
+  .card { border: 1px solid #ccc !important; box-shadow: none !important; border-radius: 4px !important; }
+  .container-page { max-width: 100% !important; padding: 0 !important; }
+  .section-pad { padding: 0 !important; }
+  @page { margin: 1.5cm; size: A4 portrait; }
+}

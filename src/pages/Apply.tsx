@@ -30,6 +30,7 @@ export default function Apply() {
 
   const [job, setJob] = useState<ContentfulJob | null>(null);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [profileComplete, setProfileComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -56,11 +57,13 @@ export default function Apply() {
       const { data: cand } = await supabase.from('candidates').select('*').eq('user_id', user.id).single();
       setCandidate(cand ?? null);
       if (cand?.id) {
-        const { data: existing } = await supabase
-          .from('applications').select('id')
-          .eq('candidate_id', cand.id)
-          .eq('job_slug', slug).maybeSingle();
+        const [{ data: existing }, { data: cp }] = await Promise.all([
+          supabase.from('applications').select('id').eq('candidate_id', cand.id).eq('job_slug', slug).maybeSingle(),
+          supabase.from('candidate_profiles').select('birth_date,gender,marital_status,nik,address_current,consent_data_truth,consent_pdp,declared_name').eq('candidate_id', cand.id).maybeSingle(),
+        ]);
         setAlreadyApplied(!!existing);
+        const c = cp as any;
+        setProfileComplete(!!(c?.birth_date && c?.gender && c?.marital_status && c?.nik && c?.address_current && c?.consent_data_truth && c?.consent_pdp && c?.declared_name));
       }
       setLoading(false);
     })();
@@ -94,7 +97,16 @@ export default function Apply() {
       cover_note: data.cover_note,
     });
 
-    if (error) { toast('Gagal mengirim lamaran: ' + error.message, 'error'); return; }
+    if (error) {
+      if (error.message.includes('already_applied_this_year')) {
+        toast('Anda sudah melamar posisi ini dalam 12 bulan terakhir.', 'error');
+      } else if (error.message.includes('profile_incomplete')) {
+        toast('Formulir Data Diri belum lengkap. Silakan lengkapi terlebih dahulu.', 'error');
+      } else {
+        toast('Gagal mengirim lamaran: ' + error.message, 'error');
+      }
+      return;
+    }
 
     try {
       await sendApplyNotification({
@@ -184,6 +196,36 @@ export default function Apply() {
           <Link to="/jobs" className="btn-secondary">Lihat Lowongan Lain</Link>
         </div>
       </div>
+      <Footer />
+    </>
+  );
+
+  // Profile not complete — gate before the form
+  if (!profileComplete) return (
+    <>
+      <Navbar />
+      <section className="section-pad">
+        <div className="container-page max-w-md text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-sag-gold">Satu Langkah Lagi</p>
+          <h1 className="mt-2 text-2xl font-black text-sag-green">Lengkapi Formulir Data Diri</h1>
+          <p className="mt-3 text-slate-500">
+            Sebelum melamar <strong>{job.title}</strong>, Anda perlu mengisi Formulir Data Diri SAG terlebih dahulu
+            dan menandatangani pernyataan persetujuan.
+          </p>
+          <div className="mt-8 grid gap-3">
+            <Link
+              to="/candidate/profile"
+              state={{ from: `/apply/${slug}` }}
+              className="btn-primary flex items-center justify-center gap-2"
+            >
+              Isi Formulir Data Diri →
+            </Link>
+            <Link to={`/jobs/${slug}`} className="text-sm text-slate-400 hover:text-slate-600 transition">
+              <ArrowLeft className="mr-1 inline h-3.5 w-3.5" /> Kembali ke Detail Lowongan
+            </Link>
+          </div>
+        </div>
+      </section>
       <Footer />
     </>
   );
