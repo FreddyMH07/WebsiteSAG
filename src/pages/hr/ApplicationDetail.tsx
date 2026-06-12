@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, ExternalLink, Save, Plus, Printer } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Save, Plus, Printer, Mail, X, Send } from 'lucide-react';
 import HRLayout from '@/components/hr/HRLayout';
 import Spinner from '@/components/common/Spinner';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -9,7 +9,26 @@ import CandidateProfileReadOnly from '@/components/hr/CandidateProfileReadOnly';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
+import {
+  emailTemplates,
+  getDefaultTemplateId,
+  fillPlaceholders,
+  MANUAL_VAR_LABELS,
+} from '@/data/emailTemplates';
 import type { ApplicationRow, ApplicationNote, ApplicationStatus, Candidate, CandidateProfile } from '@/types';
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface EmailLog {
+  id: string;
+  application_id: string;
+  template_id: string;
+  subject: string | null;
+  hr_name: string | null;
+  opened_at: string;
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
   { value: 'Applied',        label: 'Applied' },
@@ -23,35 +42,51 @@ const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
   { value: 'Talent Pool',    label: 'Talent Pool' },
 ];
 
+// Unique stage labels in order for <optgroup>
+const TEMPLATE_STAGES = [...new Set(emailTemplates.map((t) => t.stage))];
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function HRApplicationDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  const [app, setApp] = useState<ApplicationRow | null>(null);
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  // ── Core state ────────────────────────────────────────────────────────────
+  const [app,         setApp]         = useState<ApplicationRow | null>(null);
+  const [candidate,   setCandidate]   = useState<Candidate | null>(null);
   const [candProfile, setCandProfile] = useState<CandidateProfile | null>(null);
-  const [notes, setNotes] = useState<ApplicationNote[]>([]);
+  const [notes,       setNotes]       = useState<ApplicationNote[]>([]);
+  const [emailLogs,   setEmailLogs]   = useState<EmailLog[]>([]);
   const [companyInfo, setCompanyInfo] = useState<{
     name: string; short_name: string | null; logo_url: string | null; address: string | null;
   } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading,   setLoading]   = useState(true);
   const [newStatus, setNewStatus] = useState<ApplicationStatus>('Applied');
-  const [newNote, setNewNote] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [newNote,   setNewNote]   = useState('');
+  const [saving,    setSaving]    = useState(false);
 
+  // ── Email modal state ─────────────────────────────────────────────────────
+  const [emailModal,    setEmailModal]    = useState(false);
+  const [templateId,    setTemplateId]    = useState('undangan-psikotes');
+  const [manualVars,    setManualVars]    = useState({ tanggal: '', jam: '', lokasi: '' });
+  const [emailSubject,  setEmailSubject]  = useState('');
+  const [emailBody,     setEmailBody]     = useState('');
+  const [sendingEmail,  setSendingEmail]  = useState(false);
+
+  // ── Data fetch ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!id) return;
     Promise.all([
       supabase.from('applications').select('*, candidates(*)').eq('id', id).single(),
       supabase.from('application_notes').select('*').eq('application_id', id).order('created_at', { ascending: true }),
-    ]).then(async ([{ data: appData }, { data: noteData }]) => {
+      supabase.from('email_log').select('*').eq('application_id', id).order('opened_at', { ascending: false }),
+    ]).then(async ([{ data: appData }, { data: noteData }, { data: logData }]) => {
       if (appData) {
         setApp(appData as ApplicationRow);
         const cand = (appData as any).candidates as Candidate;
         setCandidate(cand);
         setNewStatus(appData.status as ApplicationStatus);
-        // Load candidate_profiles using candidate.id
         if (cand?.id) {
           const { data: cp } = await supabase
             .from('candidate_profiles')
@@ -67,20 +102,41 @@ export default function HRApplicationDetail() {
             .select('companies(name, short_name, logo_url, address)')
             .eq('id', jobId)
             .maybeSingle();
-          const co = (jobData as Record<string, unknown> | null)?.companies as {
-            name: string; short_name: string | null; logo_url: string | null; address: string | null;
-          } | null;
+          const co = (jobData as Record<string, unknown> | null)?.companies as typeof companyInfo;
           setCompanyInfo(co ?? null);
         }
       }
       setNotes((noteData ?? []) as ApplicationNote[]);
+      setEmailLogs((logData ?? []) as EmailLog[]);
     }).finally(() => setLoading(false));
   }, [id]);
 
+  // ── Re-derive email preview when template / vars change ──────────────────
+  useEffect(() => {
+    if (!emailModal || !app) return;
+    const tmpl = emailTemplates.find((t) => t.id === templateId);
+    if (!tmpl) return;
+    const vars = {
+      nama:       candidate?.full_name ?? '',
+      posisi:     app.job_title ?? app.job_slug ?? '',
+      perusahaan: companyInfo?.name ?? 'PT Sahabat Agro Group',
+      nama_hr:    profile?.full_name ?? '',
+      tanggal:    manualVars.tanggal,
+      jam:        manualVars.jam,
+      lokasi:     manualVars.lokasi,
+    };
+    setEmailSubject(fillPlaceholders(tmpl.subject, vars));
+    setEmailBody(fillPlaceholders(tmpl.body, vars));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailModal, templateId, manualVars]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleUpdateStatus = async () => {
     if (!app || !id) return;
     setSaving(true);
-    const { error } = await supabase.from('applications').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+    const { error } = await supabase.from('applications')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', id);
     if (error) { toast('Failed to update status', 'error'); }
     else { setApp({ ...app, status: newStatus }); toast('Status updated!', 'success'); }
     setSaving(false);
@@ -99,6 +155,38 @@ export default function HRApplicationDetail() {
     setSaving(false);
   };
 
+  const openEmailModal = () => {
+    if (!app) return;
+    const defaultId = getDefaultTemplateId(app.status);
+    setTemplateId(defaultId);
+    setManualVars({ tanggal: '', jam: '', lokasi: '' });
+    setEmailModal(true);
+  };
+
+  const handleOpenEmail = async () => {
+    if (!candidate?.email || !id) return;
+    setSendingEmail(true);
+    try {
+      // Log to DB (fire-and-forget; don't block mailto on error)
+      const { data: newLog } = await supabase.from('email_log').insert({
+        application_id: id,
+        template_id:    templateId,
+        subject:        emailSubject,
+        hr_name:        profile?.full_name ?? null,
+        opened_by:      user?.id ?? null,
+      }).select().single();
+      if (newLog) setEmailLogs((prev) => [newLog as EmailLog, ...prev]);
+    } catch {
+      // Non-fatal
+    }
+    // Open mailto
+    const href = `mailto:${candidate.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    window.location.href = href;
+    setEmailModal(false);
+    setSendingEmail(false);
+  };
+
+  // ── Guards ────────────────────────────────────────────────────────────────
   if (loading) return (
     <HRLayout><div className="flex justify-center py-20"><Spinner size="lg" /></div></HRLayout>
   );
@@ -106,11 +194,14 @@ export default function HRApplicationDetail() {
     <HRLayout><p className="text-slate-500">Application not found.</p></HRLayout>
   );
 
+  const currentTemplate = emailTemplates.find((t) => t.id === templateId);
+
   return (
     <>
     <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
     <HRLayout>
-      {/* Print header — only visible when printing */}
+
+      {/* ── Print header ─────────────────────────────────────────────────── */}
       {(() => {
         const co = companyInfo ?? {
           name: 'PT Sahabat Agro Group',
@@ -134,6 +225,7 @@ export default function HRApplicationDetail() {
         );
       })()}
 
+      {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="mb-6 print:hidden">
         <Link to="/hr/applications" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-sag-green transition mb-4">
           <ArrowLeft className="h-4 w-4" /> Back to Applications
@@ -163,8 +255,10 @@ export default function HRApplicationDetail() {
         <p className="text-sm text-slate-500">Applied: {new Date(app.created_at).toLocaleDateString('id-ID')}</p>
       </div>
 
+      {/* ── Main layout ──────────────────────────────────────────────────── */}
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
+
           {/* Candidate info */}
           <div className="card p-6">
             <h2 className="mb-4 font-black text-sag-green">Informasi Kandidat</h2>
@@ -189,12 +283,14 @@ export default function HRApplicationDetail() {
             </div>
             <div className="mt-4 flex flex-wrap gap-4 print:hidden">
               {candidate?.linkedin_url && (
-                <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
                   LinkedIn <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               )}
               {candidate?.cv_url ? (
-                <a href={candidate.cv_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-bold text-sag-leaf hover:underline">
+                <a href={candidate.cv_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-sag-leaf hover:underline">
                   Lihat CV / Resume <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ) : (
@@ -236,7 +332,7 @@ export default function HRApplicationDetail() {
             </div>
           )}
 
-          {/* HR Notes — hidden in print */}
+          {/* HR Notes */}
           <div className="card p-6 print:hidden">
             <h2 className="mb-4 font-black text-sag-green">Catatan HR</h2>
             {notes.length === 0 ? (
@@ -263,13 +359,45 @@ export default function HRApplicationDetail() {
               </button>
             </div>
           </div>
+
+          {/* Email Log History */}
+          <div className="card p-6 print:hidden">
+            <h2 className="mb-4 font-black text-sag-green">Riwayat Email</h2>
+            {emailLogs.length === 0 ? (
+              <p className="text-sm text-slate-400">Belum ada email yang dikirim ke kandidat ini.</p>
+            ) : (
+              <div className="space-y-2">
+                {emailLogs.map((log) => {
+                  const tmpl = emailTemplates.find((t) => t.id === log.template_id);
+                  return (
+                    <div key={log.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
+                      <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-sag-green" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-800 truncate">
+                          {log.subject ?? tmpl?.label ?? log.template_id}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {tmpl?.label ?? log.template_id}
+                          {log.hr_name ? ` · oleh ${log.hr_name}` : ''}
+                        </p>
+                      </div>
+                      <span className="flex-shrink-0 text-xs text-slate-400 whitespace-nowrap">
+                        {new Date(log.opened_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Sidebar — hidden in print */}
+        {/* ── Sidebar ────────────────────────────────────────────────────── */}
         <div className="space-y-4 print:hidden">
           <div className="card p-6">
             <h3 className="mb-4 font-black text-sag-green">Update Status</h3>
-            <select className="input text-sm" value={newStatus} onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>
+            <select className="input text-sm" value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}>
               {STATUS_OPTIONS.map(({ value, label }) => (
                 <option key={value} value={value}>{label}</option>
               ))}
@@ -277,6 +405,22 @@ export default function HRApplicationDetail() {
             <button onClick={handleUpdateStatus} disabled={saving} className="btn-primary mt-3 w-full text-sm">
               {saving ? <Spinner size="sm" /> : <><Save className="mr-2 h-4 w-4" />Simpan Status</>}
             </button>
+          </div>
+
+          {/* Email to candidate */}
+          <div className="card p-6">
+            <h3 className="mb-3 font-black text-sag-green">Kirim Email ke Kandidat</h3>
+            {candidate?.email ? (
+              <>
+                <p className="mb-3 text-xs text-slate-500 truncate">{candidate.email}</p>
+                <button onClick={openEmailModal}
+                  className="btn-secondary w-full text-sm flex items-center justify-center gap-2">
+                  <Mail className="h-4 w-4" /> Pilih Template Email
+                </button>
+              </>
+            ) : (
+              <p className="text-xs text-slate-400">Email kandidat tidak tersedia.</p>
+            )}
           </div>
 
           <div className="card p-5 text-sm text-slate-600">
@@ -292,6 +436,101 @@ export default function HRApplicationDetail() {
           </button>
         </div>
       </div>
+
+      {/* ── Email Modal ───────────────────────────────────────────────────── */}
+      {emailModal && (
+        <div className="print:hidden fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10">
+          <div className="card w-full max-w-2xl p-7">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-black text-sag-green">Kirim Email ke Kandidat</h2>
+              <button onClick={() => setEmailModal(false)}
+                className="rounded-full p-1 text-slate-400 hover:text-red-500 transition">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {/* Recipient info */}
+              <div className="rounded-2xl bg-sag-mist/60 px-4 py-3 text-xs text-slate-600">
+                <span className="font-semibold">Kepada:</span>{' '}
+                {candidate?.full_name ?? '—'} &lt;{candidate?.email ?? '—'}&gt;
+              </div>
+
+              {/* Template picker */}
+              <div>
+                <label className="label">Template Email</label>
+                <select className="input mt-1" value={templateId}
+                  onChange={(e) => setTemplateId(e.target.value)}>
+                  {TEMPLATE_STAGES.map((stage) => (
+                    <optgroup key={stage} label={stage}>
+                      {emailTemplates
+                        .filter((t) => t.stage === stage)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>{t.label}</option>
+                        ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              {/* Manual variable inputs */}
+              {currentTemplate && currentTemplate.manualVars.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {currentTemplate.manualVars.map((v) => (
+                    <div key={v}>
+                      <label className="label">{MANUAL_VAR_LABELS[v]}</label>
+                      <input className="input mt-1" value={manualVars[v]}
+                        onChange={(e) => setManualVars((p) => ({ ...p, [v]: e.target.value }))}
+                        placeholder={`Isi ${MANUAL_VAR_LABELS[v].toLowerCase()}…`} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Preview — editable */}
+              <div>
+                <label className="label">Subject Email (dapat diedit)</label>
+                <input className="input mt-1 font-mono text-sm" value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)} />
+              </div>
+              <div>
+                <label className="label">
+                  Isi Email (dapat diedit)
+                  <span className="ml-2 font-normal text-slate-400">
+                    {emailBody.length} karakter
+                  </span>
+                </label>
+                <textarea
+                  className="input mt-1 h-64 resize-y font-mono text-xs leading-relaxed"
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                />
+              </div>
+
+              {/* Info note */}
+              <p className="text-xs text-slate-400">
+                Klik "Buka di Email" untuk membuka draft di aplikasi email Anda (Outlook/Gmail/dll).
+                Kirim dari sana. Sistem akan mencatat log bahwa email ini telah dibuka.
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setEmailModal(false)} className="btn-secondary">Batal</button>
+              <button
+                onClick={handleOpenEmail}
+                disabled={sendingEmail || !candidate?.email || !emailSubject || !emailBody}
+                className="btn-primary flex items-center gap-2"
+              >
+                {sendingEmail
+                  ? <Spinner size="sm" />
+                  : <><Send className="h-4 w-4" /> Buka di Email</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </HRLayout>
     </>
   );

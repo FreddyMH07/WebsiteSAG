@@ -202,6 +202,29 @@ export const helpTopics: HelpTopic[] = [
     answer:
       'Sistem mencegah kandidat yang sama melamar ke grup SAG lebih dari satu kali dalam 12 bulan, untuk posisi apapun. Jika kandidat mencoba melamar lagi sebelum 12 bulan berlalu, sistem akan otomatis memblokir dengan menampilkan informasi kapan mereka bisa melamar kembali.',
   },
+  {
+    id: 'lamaran-email-template',
+    category: 'Kelola Lamaran',
+    question: 'Bagaimana cara mengirim email ke kandidat menggunakan template?',
+    answer:
+      'Di halaman detail lamaran, klik tombol "Pilih Template Email" di panel kanan. Pilih template yang sesuai (misal: Undangan Psikotes, Interview HR, dll.), isi variabel seperti tanggal/jam/lokasi jika template memerlukannya, lalu edit subject dan isi email jika perlu. Klik "Buka di Email" untuk membuka draft di aplikasi email Anda (Outlook/Gmail).',
+    steps: [
+      'Buka detail lamaran',
+      'Klik "Pilih Template Email" di panel kanan',
+      'Pilih template yang sesuai dari dropdown',
+      'Isi variabel wajib (tanggal, jam, lokasi) jika ada',
+      'Periksa dan edit preview subject & isi email',
+      'Klik "Buka di Email" — aplikasi email akan terbuka dengan draft',
+      'Kirim email dari aplikasi email Anda',
+    ],
+  },
+  {
+    id: 'lamaran-email-cara-kirim',
+    category: 'Kelola Lamaran',
+    question: 'Mengapa email tidak langsung terkirim dari sistem — harus via Outlook/Gmail?',
+    answer:
+      'Sistem membuka email client Anda (Outlook, Gmail, dll.) dengan draft yang sudah terisi — bukan mengirim langsung dari server. Ini dipilih agar pengiriman email tetap dari akun email resmi HR perusahaan, bukan dari domain pihak ketiga. Setelah "Buka di Email" diklik, sistem mencatat log bahwa email template tersebut telah dibuka untuk kandidat ini (terlihat di bagian "Riwayat Email" di halaman detail lamaran).',
+  },
 
   // ── Kelola Perusahaan ──────────────────────────────────────────────────────
 
