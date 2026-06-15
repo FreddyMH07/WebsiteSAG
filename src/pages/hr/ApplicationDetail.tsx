@@ -256,7 +256,9 @@ export default function HRApplicationDetail() {
       </div>
 
       {/* ── Main layout ──────────────────────────────────────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      {/* print-single-col: collapses the two-column grid in print so the
+          hidden sidebar track doesn't add phantom height (blank last page) */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px] print-single-col">
         <div className="space-y-5">
 
           {/* Candidate info */}

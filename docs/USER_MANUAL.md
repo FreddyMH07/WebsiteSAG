@@ -222,8 +222,18 @@ Halaman ini memuat:
 2. Browser membuka dialog print
 3. **Kop surat otomatis** — logo dan nama PT sesuai perusahaan yang membuka lowongan tersebut (bukan selalu SAG Holding). Jika perusahaan belum memiliki logo, otomatis menggunakan logo SAG sebagai fallback
 4. Kop menampilkan: logo, nama PT, alamat (jika ada), label "EMPLOYMENT APPLICATION FORM", dan tanggal cetak
+5. Pilih **Save as PDF** (atau printer fisik) → klik Print/Save
 
 > Widget helpdesk dan elemen UI lainnya **tidak ikut tercetak** (`print:hidden`).
+
+#### Tips: PDF Bersih Tanpa Header/Footer Browser
+
+Baris seperti tanggal/jam + judul tab (atas) dan URL + nomor halaman "1 / 4" (bawah) diinjeksi oleh dialog cetak browser, **bukan** oleh aplikasi, sehingga tidak bisa dihapus via kode. Untuk PDF bersih:
+
+- **Chrome / Edge:** Dialog Print → **More settings** → nonaktifkan **Headers and footers**
+- **Firefox:** Dialog Print → **More settings** → bagian **Options** → hapus centang **Print headers and footers**
+
+Setelah dimatikan, PDF hanya berisi kop dari aplikasi (logo PT + label formulir) tanpa tambahan dari browser.
 
 ### 3.6 Daftar Kandidat (`/hr/candidates`)
 

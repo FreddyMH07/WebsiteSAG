@@ -54,5 +54,19 @@ html { scroll-behavior: smooth; }
     page-break-after: avoid;
   }
 
-  @page { margin: 1.5cm; size: A4 portrait; }
+  /* ── Trailing-blank-page prevention ─────────────────────────────────── */
+  /* Kill bottom margin/padding on the very last printed element so content
+     does not spill a few pixels past the last page boundary.              */
+  .break-inside-avoid:last-child { margin-bottom: 0 !important; }
+  main > *:last-child            { margin-bottom: 0 !important; }
+
+  /* Collapse the two-column page layout (sidebar hidden in print anyway).
+     An empty grid track from the hidden right column adds phantom height
+     in some browsers and causes a spurious blank last page.              */
+  .print-single-col {
+    display: block !important;
+    gap: 0 !important;
+  }
+
+  @page { margin: 1.2cm; size: A4 portrait; }
 }
