@@ -23,11 +23,36 @@ html { scroll-behavior: smooth; }
   body { background: white !important; font-size: 11pt; }
   html, body { height: auto !important; overflow: visible !important; }
   .h-screen { height: auto !important; }
-  .overflow-hidden, .overflow-y-auto { overflow: visible !important; height: auto !important; }
+  .overflow-hidden, .overflow-y-auto, .overflow-x-auto { overflow: visible !important; height: auto !important; }
   main { overflow: visible !important; padding: 0 !important; }
   nav, footer, aside, header, .print\:hidden { display: none !important; }
   .card { border: 1px solid #ccc !important; box-shadow: none !important; border-radius: 4px !important; }
   .container-page { max-width: 100% !important; padding: 0 !important; }
   .section-pad { padding: 0 !important; }
+
+  /* ── Page-break controls ─────────────────────────────────────────── */
+  /* Utility class applied to Row and SectionBox wrappers               */
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid; /* legacy Safari / Firefox */
+  }
+
+  /* Table rows and images must never split across pages */
+  tr, img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Repeat thead on every printed page for long tables */
+  thead {
+    display: table-header-group;
+  }
+
+  /* Section headings must not be left orphaned at the bottom of a page */
+  h1, h2, h3, h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   @page { margin: 1.5cm; size: A4 portrait; }
 }

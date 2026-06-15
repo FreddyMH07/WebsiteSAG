@@ -3,14 +3,14 @@ import type { CandidateProfile } from '@/types';
 interface Props { cp: CandidateProfile }
 
 const Row = ({ label, value }: { label: string; value?: string | null }) => (
-  <div>
+  <div className="break-inside-avoid">
     <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
     <p className="text-sm text-slate-800">{value || '—'}</p>
   </div>
 );
 
 const SectionBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="mb-6 print:mb-4">
+  <div className="mb-6 print:mb-4 break-inside-avoid">
     <h3 className="mb-3 border-b border-sag-green/20 pb-1 text-base font-black text-sag-green">{title}</h3>
     {children}
   </div>
@@ -163,7 +163,7 @@ export default function CandidateProfileReadOnly({ cp }: Props) {
         {(cp.work_experiences ?? []).length === 0 ? <p className="text-slate-400 text-xs">Tidak ada data</p> : (
           <div className="space-y-4">
             {cp.work_experiences.map((w, i) => (
-              <div key={i} className="rounded-2xl border border-slate-100 p-4">
+              <div key={i} className="rounded-2xl border border-slate-100 p-4 break-inside-avoid">
                 <p className="mb-2 font-bold text-sag-green text-xs">Perusahaan #{i + 1}</p>
                 <div className="grid gap-2 sm:grid-cols-3 text-xs">
                   <Row label="Nama & Alamat Perusahaan" value={w.company} />
@@ -229,7 +229,7 @@ export default function CandidateProfileReadOnly({ cp }: Props) {
             ['Konsekuensi tolak mutasi', o.transfer_refusal_consequence, undefined],
             ['Bersedia dinas luar kota', o.willing_travel, o.not_willing_travel_reason],
           ].map(([label, val, detail]) => (
-            <div key={label as string}>
+            <div key={label as string} className="break-inside-avoid">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label as string}</p>
               <p className="text-sm text-slate-800">{(val as string) || '—'}{detail ? ` — ${detail}` : ''}</p>
             </div>
