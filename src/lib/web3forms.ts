@@ -1,4 +1,5 @@
-const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY as string | undefined;
+// PUBLIC_* fallback: transitional support while Vercel env vars are being renamed to VITE_*
+const ACCESS_KEY = (import.meta.env.VITE_WEB3FORMS_ACCESS_KEY ?? import.meta.env.PUBLIC_WEB3FORMS_KEY_CAREER) as string | undefined;
 const ENDPOINT = 'https://api.web3forms.com/submit';
 
 interface ContactPayload {
