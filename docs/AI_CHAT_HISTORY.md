@@ -1,7 +1,7 @@
 # AI Chat History — SAG Career Portal
 **Project:** sag-website-vite (career.sahabatagro.co.id)
 **AI:** Claude Sonnet 4.6 (claude-sonnet-4-6)
-**Developer:** Freddy Mazmurhutabarat (freddymazmurhutabarat07@gmail.com)
+**Developer:** Freddy Mazmurhutabarat (admin@sahabatagro.co.id)
 **Periode:** Juni 2026
 
 ---
@@ -118,7 +118,7 @@
 ### Sesi 8 (Critical Bug Fix — HR Login)
 **Fokus:** Fix HR admin tidak bisa login
 
-**Masalah dilaporkan:** User `freddymazmurhutabarat07@gmail.com` dengan role `super_admin` dapat "Akses ditolak" saat login HR.
+**Masalah dilaporkan:** User `admin@sahabatagro.co.id` dengan role `super_admin` dapat "Akses ditolak" saat login HR.
 
 **Investigasi:**
 
@@ -225,7 +225,7 @@ Dibuat `supabase/migrations/002_fix_rls_and_missing_tables.sql` yang:
 | Project Name | sag-career-portal |
 | Project URL | https://qziolrpcgmbhedtetnzl.supabase.co |
 | Account | sahabatagro.it@gmail.com |
-| Super Admin Auth User | freddymazmurhutabarat07@gmail.com |
+| Super Admin Auth User | admin@sahabatagro.co.id |
 | Super Admin UUID | 002e8841-4302-47f7-a2f8-268da3330859 |
 
 ---

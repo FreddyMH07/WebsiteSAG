@@ -225,6 +225,6 @@ CREATE POLICY "notes: creator read"
 
 -- ─── Done ─────────────────────────────────────────────────────
 -- After running this, verify super_admin role:
--- SELECT id, email, role FROM profiles WHERE email = 'freddymazmurhutabarat07@gmail.com';
+-- SELECT id, email, role FROM profiles WHERE email = 'admin@sahabatagro.co.id';
 -- If role is not super_admin, run:
--- UPDATE profiles SET role = 'super_admin' WHERE email = 'freddymazmurhutabarat07@gmail.com';
+-- UPDATE profiles SET role = 'super_admin' WHERE email = 'admin@sahabatagro.co.id';

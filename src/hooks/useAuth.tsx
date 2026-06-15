@@ -34,7 +34,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(uid: string) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
+    if (error) {
+      // PGRST116 = no rows (new user, profile not yet created) — silent
+      // Other errors (RLS recursion, network) should surface so the UI can react
+      if (error.code !== 'PGRST116') {
+        console.error('[useAuth] loadProfile error:', error.message, error.code);
+      }
+      setProfile(null);
+      return;
+    }
     setProfile(data ?? null);
   }
 

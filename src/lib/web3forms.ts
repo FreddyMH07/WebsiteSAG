@@ -1,4 +1,4 @@
-const ACCESS_KEY = (import.meta.env.PUBLIC_WEB3FORMS_KEY_CAREER ?? import.meta.env.VITE_WEB3FORMS_ACCESS_KEY) as string | undefined;
+const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY as string | undefined;
 const ENDPOINT = 'https://api.web3forms.com/submit';
 
 interface ContactPayload {
