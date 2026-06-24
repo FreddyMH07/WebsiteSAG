@@ -1,20 +1,25 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import HelpDesk from '@/components/hr/HelpDesk';
-import { LayoutDashboard, Users, FileText, Menu, LogOut, ChevronRight, Briefcase, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Menu, LogOut, ChevronRight, Briefcase, Building2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { sagAssets } from '@/data/siteContent';
 
-const menu = [
-  { label: 'Dashboard', href: '/hr/dashboard', icon: LayoutDashboard },
-  { label: 'Jobs', href: '/hr/jobs', icon: Briefcase },
-  { label: 'Applications', href: '/hr/applications', icon: FileText },
-  { label: 'Candidates',  href: '/hr/candidates',  icon: Users },
-  { label: 'Perusahaan',  href: '/hr/companies',   icon: Building2 },
+const BASE_MENU = [
+  { label: 'Dashboard',    href: '/hr/dashboard',    icon: LayoutDashboard },
+  { label: 'Jobs',         href: '/hr/jobs',          icon: Briefcase },
+  { label: 'Applications', href: '/hr/applications',  icon: FileText },
+  { label: 'Candidates',   href: '/hr/candidates',    icon: Users },
+  { label: 'Perusahaan',   href: '/hr/companies',     icon: Building2 },
 ];
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {
-  const { profile, signOut } = useAuth();
+  const { profile, isSuperAdmin, signOut } = useAuth();
+
+  const menu = [
+    ...BASE_MENU,
+    ...(isSuperAdmin ? [{ label: 'Kelola User', href: '/hr/users', icon: ShieldCheck }] : []),
+  ];
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

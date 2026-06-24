@@ -239,7 +239,27 @@ Setelah dimatikan, PDF hanya berisi kop dari aplikasi (logo PT + label formulir)
 
 Tabel semua kandidat terdaftar: nama, email, HP, domisili, pendidikan, dan link CV. Tersedia filter dan pencarian.
 
-### 3.7 Kelola Perusahaan (`/hr/companies`)
+### 3.7 Kelola Pengguna HR (`/hr/users`) — *Super Admin Only*
+
+Halaman ini hanya muncul di sidebar jika Anda login sebagai **Super Admin**.
+
+#### Tim HR — Daftar Pengguna Aktif
+- Menampilkan semua akun dengan role `hr_admin` atau `super_admin`
+- Kolom: Nama, Email, Role, Status, Aksi
+- Aksi yang tersedia (kecuali untuk akun sendiri):
+  - **Super Admin** / **Turunkan ke HR Admin** — mengubah role
+  - **Nonaktifkan / Aktifkan** — mengubah status akun
+  - **Cabut Akses HR** — mengembalikan role ke `candidate` (mencabut akses HR portal)
+
+#### Tambah / Promosikan HR Admin
+1. Masukkan email pengguna → klik **Cari**
+2. **Jika user ditemukan (role kandidat):** klik **Jadikan HR Admin**
+3. **Jika user sudah HR Admin:** opsi **Promosikan ke Super Admin** tersedia
+4. **Jika user belum terdaftar:** klik **Kirim Magic Link Undangan** agar mereka bisa membuat akun. Setelah login pertama, cari lagi di sini untuk dipromosikan
+
+> Catatan: Untuk menghapus akun sepenuhnya, gunakan **Supabase Dashboard → Authentication → Users**.
+
+### 3.8 Kelola Perusahaan (`/hr/companies`)
 
 Daftar PT dalam Grup SAG beserta logo yang digunakan pada kop cetak formulir.
 
@@ -290,7 +310,11 @@ Form pesan langsung ke tim HR via Web3Forms. Informasi kontak lengkap.
 
 ### "Akses ditolak. Portal ini hanya untuk HR Admin."
 **Penyebab:** Role akun bukan `hr_admin` atau `super_admin`.  
-**Solusi:** Hubungi Super Admin untuk mengatur role di database.
+**Solusi:** Hubungi Super Admin agar role diubah melalui halaman **Kelola User** (`/hr/users`).
+
+### "Akses Dibatasi" di halaman Kelola User
+**Penyebab:** Halaman `/hr/users` hanya untuk role `super_admin`.  
+**Solusi:** Hubungi Super Admin untuk mendapatkan role `super_admin`.
 
 ### Tombol "Apply Sekarang" tidak muncul
 **Penyebab:** Profil kandidat belum lengkap (domisili, pendidikan, atau CV belum diisi).  
